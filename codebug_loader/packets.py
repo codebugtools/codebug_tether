@@ -21,10 +21,16 @@ class GetPacket(object):
         self.cmd_id = CMD_GET
         self.channel_index = channel_index
 
+    def __str__(self):
+        return "get ch{}".format(self.channel_index)
+
+    def __repr__(self):
+        return "<GetPacket(channel_index={})>".format(self.channel_index)
+
     def to_bytes(self):
         self.cmd_id &= 0b111
         self.channel_index &= 0b111
-        return struct.pack('b', self.cmd_id << 5 | self.channel_index << 2)
+        return struct.pack('B', self.cmd_id << 5 | self.channel_index << 2)
 
 
 class SetPacket(object):
@@ -45,11 +51,19 @@ class SetPacket(object):
         self.channel_index = channel_index
         self.value = value
 
+    def __str__(self):
+        return "set ch{} to {}".format(self.channel_index, self.value)
+
+    def __repr__(self):
+        return "<SetPacket(channel_index={},value={})>".format(
+            self.channel_index,
+            hex(self.value))
+
     def to_bytes(self):
         self.cmd_id &= 0b111
         self.channel_index &= 0b111
         self.value &= 0xff
-        return struct.pack('bb',
+        return struct.pack('BB',
                            self.cmd_id << 5 | self.channel_index << 2,
                            self.value)
 
@@ -73,11 +87,20 @@ class GetBulkPacket(object):
         self.start_channel_index = start_channel_index
         self.length = length
 
+    def __str__(self):
+        return "get {} channels from ch{}".format(self.length,
+                                                  self.channel_index)
+
+    def __repr__(self):
+        return "<GetBulkPacket(start_channel_index={},length={})>".format(
+            self.start_channel_index,
+            self.length)
+
     def to_bytes(self):
         self.cmd_id &= 0b111
         self.start_channel_index &= 0b111
         self.length &= 0xff
-        return struct.pack('bb',
+        return struct.pack('BB',
                            self.cmd_id << 5 | self.start_channel_index << 2,
                            self.length)
 
@@ -108,11 +131,20 @@ class SetBulkPacket(object):
         self.length = len(values)
         self.values = values
 
+    def __str__(self):
+        return "set {} channels from ch{} to {}".format(self.length,
+                                                        self.channel_index,
+                                                        self.values)
+
+    def __repr__(self):
+        s = "<SetBulkPacket(start_channel_index={},length={},values={})>"
+        return s.format(self.start_channel_index, self.length, self.values)
+
     def to_bytes(self):
         self.cmd_id &= 0b111
         self.start_channel_index &= 0b111
         self.length &= 0xff
-        return struct.pack('bb',
+        return struct.pack('BB',
                            self.cmd_id << 5 | self.start_channel_index << 2,
                            self.length) + bytes(self.values)
 
@@ -122,11 +154,11 @@ class ReadPacket(object):
 
     Structure:
 
-        +--------+---------------+--------+
-        | cmd_id | start address | length |
-        +--------+---------------+--------+
-        | 1 byte | 1 byte        | 1 byte |
-        +--------+---------------+--------+
+        +--------+--------+---------------+--------+
+        | cmd_id | unused | start address | length |
+        +--------+--------+---------------+--------+
+        | 3 bits | 5 bits | 1 byte        | 1 byte |
+        +--------+--------+---------------+--------+
 
     """
 
@@ -135,33 +167,52 @@ class ReadPacket(object):
         self.start_address = start_address
         self.length = length
 
+    def __str__(self):
+        return "read {} bytes from {}".format(self.length, self.start_address)
+
+    def __repr__(self):
+        s = "<ReadPacket(start_address={},length={})>"
+        return s.format(self.start_address, self.length)
+
     def to_bytes(self):
-        return struct.pack('bbb', self.cmd_id, self.start_address, self.length)
+        return struct.pack('BBB',
+                           self.cmd_id << 5,
+                           self.start_address,
+                           self.length)
 
 
 class WritePacket(object):
-    """WRITE packet for
+    """WRITE packet for writing large chunks of memory. Payload is in bytes.
 
     Structure:
 
-        +--------+---------------------+--------+--------+------------+
-        | cmd_id | start channel index | unused | length | payload    |
-        +--------+---------------------+--------+--------+------------+
-        | 3 bits | 3 bits              | 2 bits | 1 byte | 1+ byte(s) |
-        +--------+---------------------+--------+--------+------------+
+        +--------+--------+---------------+--------+------------+
+        | cmd_id | unused | start address | length | payload    |
+        +--------+--------+---------------+--------+------------+
+        | 3 bits | 5 bits | 1 byte        | 1 byte | 1+ byte(s) |
+        +--------+--------+---------------+--------+------------+
 
     """
 
-    def __init__(self, start_channel_index, payload):
+    def __init__(self, start_address, payload):
         self.cmd_id = CMD_WRITE
-        self.start_channel_index = start_channel_index
+        self.start_address = start_address
         self.length = len(payload)
         self.payload = payload
 
+    def __str__(self):
+        return "write {} bytes to {}".format(self.length,
+                                             self.start_address)
+
+    def __repr__(self):
+        s = "<WritePacket(start_address={},length={},values={})>"
+        return s.format(self.start_address, self.length, self.values)
+
     def to_bytes(self):
         self.cmd_id &= 0b111
-        self.start_channel_index &= 0b111
+        self.start_address &= 0xff
         self.length &= 0xff
-        return struct.pack('bb',
-                           self.cmd_id << 5 | self.start_channel_index << 2,
+        return struct.pack('BBB',
+                           self.cmd_id << 5,
+                           self.start_address,
                            self.length) + self.payload

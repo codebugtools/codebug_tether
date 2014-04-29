@@ -10,7 +10,7 @@ from codebug_loader.core import CodeBug
 class TestCodeBugObject(unittest.TestCase):
 
     def setUp(self):
-        self.codebug = CodeBug()
+        self.codebug = CodeBug(None)
         self.num_channels = 6
 
     def test_channels(self):
@@ -42,6 +42,20 @@ class TestCodeBugObject(unittest.TestCase):
             >>> codebug.set_bulk(0, [1, 2, 3])
             >>> codebug.channels[1].value
             2
+        """
+        v = list(range(self.num_channels))
+        self.codebug.set_bulk(0, v)
+        self.assertEqual(self.codebug.get_bulk(0, len(v)), v)
+
+        v[2] = 42
+        v[3] = 43
+        self.codebug.set_bulk(2, v[2:4])
+        self.assertEqual(self.codebug.get_bulk(0, 6), v)
+
+    def test_channel_read_write(self):
+        """
+            >>> codebug.write(0x300, data)
+            >>> codebug.read(0x300, 0x400)
         """
         v = list(range(self.num_channels))
         self.codebug.set_bulk(0, v)
