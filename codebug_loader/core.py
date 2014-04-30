@@ -1,4 +1,5 @@
 import os
+import time
 import codebug_loader.packets
 import serial
 import struct
@@ -79,7 +80,21 @@ def tx_rx_packet(packet, serial_port):
     # for row in STUB_CHANNELS[:5]:
     #     print("{:05b}".format(row).replace("0", "-").replace("1", "#"))
 
+    # print("Writing {} ({})".format(packet, time.time()))
+    # print("data", packet.to_bytes())
     serial_port.write(packet.to_bytes())
     if isinstance(packet, codebug_loader.packets.GetPacket):
         # just read 1 byte
         return struct.unpack('B', serial_port.read(1))[0]
+
+    elif (isinstance(packet, codebug_loader.packets.SetPacket) or
+          isinstance(packet, codebug_loader.packets.SetBulkPacket)):
+        # just read 1 byte
+        assert (struct.unpack('B', serial_port.read(1))[0] ==
+                codebug_loader.packets.AckPacket.ACK_BYTE)
+
+    elif isinstance(packet, codebug_loader.packets.GetBulkPacket):
+        # read `length` bytes
+        # print("len", packet.length)
+        return struct.unpack('B'*packet.length,
+                             serial_port.read(packet.length))

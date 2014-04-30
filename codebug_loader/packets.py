@@ -1,7 +1,44 @@
 import struct
 
 
-CMD_GET, CMD_SET, CMD_GET_BULK, CMD_SET_BULK, CMD_READ, CMD_WRITE = range(6)
+CMD_GET = 0
+CMD_SET = 1
+CMD_GET_BULK = 2
+CMD_SET_BULK = 3
+CMD_READ = 4
+CMD_WRITE = 5
+CMD_ACK = 6
+
+
+class AckPacket(object):
+    """ACK for set/write packets (client waits for ack, otherwise timing
+    gets out of sync)
+
+    Structure:
+
+        +--------+--------+
+        | cmd_id | unused |
+        +--------+--------+
+        | 3 bits | 5 bits |
+        +--------+--------+
+
+    """
+
+    ACK_BYTE = CMD_ACK << 5
+
+    def __init__(self):
+        self.cmd_id = CMD_ACK
+
+    def __str__(self):
+        return "ack"
+
+    def __repr__(self):
+        return "<AckPacket()>"
+
+    def to_bytes(self):
+        self.cmd_id &= 0b111
+        return struct.pack('B', self.cmd_id << 5)
+
 
 
 class GetPacket(object):
@@ -89,7 +126,7 @@ class GetBulkPacket(object):
 
     def __str__(self):
         return "get {} channels from ch{}".format(self.length,
-                                                  self.channel_index)
+                                                  self.start_channel_index)
 
     def __repr__(self):
         return "<GetBulkPacket(start_channel_index={},length={})>".format(
@@ -132,9 +169,8 @@ class SetBulkPacket(object):
         self.values = values
 
     def __str__(self):
-        return "set {} channels from ch{} to {}".format(self.length,
-                                                        self.channel_index,
-                                                        self.values)
+        return "set {} channels from ch{} to {}".format(
+            self.length, self.start_channel_index, self.values)
 
     def __repr__(self):
         s = "<SetBulkPacket(start_channel_index={},length={},values={})>"

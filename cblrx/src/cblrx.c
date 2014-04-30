@@ -6,8 +6,9 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
-// #include "cblrx.h"
 
+
+#define PKT_BUF_SIZE 256
 
 #define CMD_ID(b) ((b >> 5) & 0x7)
 // #define CMD_ID_FILTER 0xE0 // top three bits is cmd_id
@@ -17,23 +18,27 @@
 #define CMD_ID_SET_BULK 3
 #define CMD_ID_READ 4
 #define CMD_ID_WRITE 5
+#define CMD_ID_ACK 6
 
 #define CH_INDEX(b) ((b >> 2) & 0x7)
 
 
-char rows[6] = {0, 0, 0, 0, 0, 0};
+char rows[7] = {0, 0, 0, 0, 0, 0, 0};
 
 
 int openpt(void);
 char get_channel(int i);
 void set_channel(int i, char v);
 void draw_codebug(void);
+void send_ack(int fd);
 
 
 int main(void)
 {
-    int read_count;
-    char buf = 0;
+    // some useful vars
+    char cv; // channel value
+    char buf[PKT_BUF_SIZE];
+    int start_ch, i, len,read_count;
 
     int fd = openpt();
     if (fd < 0) {
@@ -44,41 +49,57 @@ int main(void)
 
     while (1) {
         // get first byte of packet
-        read_count = read(fd, &buf, 1);
+        read_count = read(fd, buf, PKT_BUF_SIZE);
         if (read_count < 0) {
             fprintf(stderr, "%s\n", strerror(errno));
             break;
         }
-        switch (CMD_ID(buf)) {
+
+        // act accordingly
+        switch (CMD_ID(buf[0])) {
         case CMD_ID_GET:
-            // printf("cmd: CMD_ID_GET\n");
-            buf = get_channel(CH_INDEX(buf));
-            write(fd, &buf, 1);
+            // get and return channel value
+            cv = get_channel(CH_INDEX(buf[0]));
+            write(fd, &cv, 1);
             break;
+
         case CMD_ID_SET:
-            // printf("cmd: CMD_ID_SET\n");
-            ; // can't have decleration after label
-            const char index = CH_INDEX(buf);
-            read(fd, &buf, 1);
-            set_channel(index, buf);
+            set_channel(CH_INDEX(buf[0]), buf[1]);
+            send_ack(fd);
             break;
+
         case CMD_ID_GET_BULK:
-            printf("cmd: CMD_ID_GET_BULK\n");
+            start_ch = CH_INDEX(buf[0]);
+            len = buf[1];
+            for (i = 0; i < len; i++) {
+                buf[i] = get_channel(start_ch+i);
+            }
+            write(fd, buf, len);
             break;
+
         case CMD_ID_SET_BULK:
-            printf("cmd: CMD_ID_SET_BULK\n");
+            start_ch = CH_INDEX(buf[0]);
+            len = buf[1];
+            for (i = 0; i < len; i++) {
+                set_channel(start_ch+i, buf[2+i]);
+            }
+            send_ack(fd);
             break;
+
         case CMD_ID_READ:
             printf("cmd: CMD_ID_READ\n");
             break;
+
         case CMD_ID_WRITE:
             printf("cmd: CMD_ID_WRITE\n");
             break;
+
         default:
             printf("ERR:Could not determine cmd.\n");
             return 1;
         }
 
+        // displaying 'leds'
         system("clear");
         draw_codebug();
     }
@@ -128,4 +149,10 @@ void draw_codebug(void)
         }
         printf("%s\n", row);
     }
+}
+
+void send_ack(int fd)
+{
+    const char ack_pkt = CMD_ID_ACK << 5;
+    write(fd, &ack_pkt, 1);
 }
