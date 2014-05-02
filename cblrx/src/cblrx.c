@@ -21,6 +21,7 @@
 #define CMD_ID_ACK 6
 
 #define CH_INDEX(b) ((b >> 2) & 0x7)
+#define OR_MASK(b) ((b >> 1) & 0x1)
 
 
 char rows[7] = {0, 0, 0, 0, 0, 0, 0};
@@ -28,7 +29,7 @@ char rows[7] = {0, 0, 0, 0, 0, 0, 0};
 
 int openpt(void);
 char get_channel(int i);
-void set_channel(int i, char v);
+void set_channel(int i, char v, char or_mask);
 void draw_codebug(void);
 void send_ack(int fd);
 
@@ -64,7 +65,7 @@ int main(void)
             break;
 
         case CMD_ID_SET:
-            set_channel(CH_INDEX(buf[0]), buf[1]);
+            set_channel(CH_INDEX(buf[0]), buf[1], OR_MASK(buf[0]));
             send_ack(fd);
             break;
 
@@ -81,7 +82,7 @@ int main(void)
             start_ch = CH_INDEX(buf[0]);
             len = buf[1];
             for (i = 0; i < len; i++) {
-                set_channel(start_ch+i, buf[2+i]);
+                set_channel(start_ch+i, buf[2+i], OR_MASK(buf[0]));
             }
             send_ack(fd);
             break;
@@ -134,8 +135,11 @@ char get_channel(int i)
     return rows[i] & 0x1f; // get_row
 }
 
-void set_channel(int i, char v)
+void set_channel(int i, char v, char or_mask)
 {
+    if (or_mask) {
+        v |= get_channel(i);
+    }
     rows[i] = v & 0x1f; // set_row
 }
 

@@ -1,12 +1,7 @@
+"""4x5 character map.
+https://github.com/tompreston/4x5-Font
+http://clubweb.interbaun.com/~rc/Papers/microfont.pdf
 """
-Sends text to codebug when in tethered mode.
-"""
-import time
-import sys
-import serial
-from codebug_loader.core import CodeBug
-
-
 char_map = {
     '': [0x0, 0x0, 0x0, 0x0, 0x0],
     ' ': [0x0, 0x0, 0x0, 0x0, 0x0],
@@ -107,21 +102,55 @@ char_map = {
 }
 
 
-def print_char_on_codebug(char, codebug):
-    for row_i, v in enumerate(char_map[char]):
-        codebug.set(4-row_i, v)
+class CharSprite(object):
+    """A character sprite."""
+
+    width = 4
+    height = 5
+
+    def __init__(self, char):
+        self.char = char
+        self.led_state = [[(char_map[self.char][row] >> shift) & 0x1
+                           for shift in reversed(range(4))]
+                          for row in range(5)]
 
 
-if __name__ == '__main__':
-    if len(sys.argv) <= 1:
-        s = None
-    else:
-        s = serial.Serial(sys.argv[1], baudrate=9600)
-    cb = CodeBug(s)
+class StringSprite(object):
+    """A sprite storing a string."""
 
-    message = "Hello, CodeBug!"
+    def __init__(self, string, direction='right'):
+        self.string = string
 
-    # rows of LED's are channels
-    for char in message:
-        print_char_on_codebug(char, cb)
-        time.sleep(0.5)
+        if "r" in direction.lower() or "l" in direction.lower():
+            self.width = 5 * len(string)
+            self.height = 5
+        elif "u" in direction.lower() or "d" in direction.lower():
+            self.width = 4
+            self.height = 6 * len(string)
+
+        self.led_state = [[0 for i in range(self.width)]
+                          for j in range(self.height)]
+
+        for char_index, c in enumerate(self.string):
+            char_sprite = CharSprite(c)
+            for y in range(char_sprite.height):
+                for x in range(char_sprite.width):
+
+                    if "r" in direction.lower():
+                        self.led_state[y][x+(char_index*5)] = \
+                            char_sprite.led_state[y][x]
+
+                    if "l" in direction.lower():
+                        self.led_state[y][x+(self.width - char_index*5)] = \
+                            char_sprite.led_state[y][x]
+
+                    if "d" in direction.lower():
+                        self.led_state[y+(char_index*6)][x] = \
+                            char_sprite.led_state[y][x]
+
+                    if "u" in direction.lower():
+                        self.led_state[y+(char_index*6)][x] = \
+                            char_sprite.led_state[y][x]
+
+        for row in self.led_state:
+            print(row)
