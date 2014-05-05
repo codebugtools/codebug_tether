@@ -1,3 +1,4 @@
+makedebpkg.sh
 dpkg-files
 *.deb
 _build
