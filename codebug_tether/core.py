@@ -2,8 +2,8 @@ import os
 import time
 import serial
 import struct
-import codebug_loader.packets
-from codebug_loader.char_map import (char_map, StringSprite)
+import codebug_tether.packets
+from codebug_tether.char_map import (char_map, StringSprite)
 
 
 DEFAULT_SERIAL_PORT = '/dev/ttyACM0'
@@ -32,20 +32,20 @@ class CodeBugRaw(object):
         self.channels = [self.Channel(i, self) for i in range(6)]
 
     def get(self, index):
-        get_packet = codebug_loader.packets.GetPacket(index)
+        get_packet = codebug_tether.packets.GetPacket(index)
         return tx_rx_packet(get_packet, self.serial_port)
 
     def set(self, index, v, or_mask=False):
-        set_packet = codebug_loader.packets.SetPacket(index, v, or_mask)
+        set_packet = codebug_tether.packets.SetPacket(index, v, or_mask)
         tx_rx_packet(set_packet, self.serial_port)
 
     def get_bulk(self, start_index, length):
-        get_bulk_pkt = codebug_loader.packets.GetBulkPacket(start_index,
+        get_bulk_pkt = codebug_tether.packets.GetBulkPacket(start_index,
                                                             length)
         return tx_rx_packet(get_bulk_pkt, self.serial_port)
 
     def set_bulk(self, start_index, values, or_mask=False):
-        set_bulk_pkt = codebug_loader.packets.SetBulkPacket(start_index,
+        set_bulk_pkt = codebug_tether.packets.SetBulkPacket(start_index,
                                                             values,
                                                             or_mask)
         tx_rx_packet(set_bulk_pkt, self.serial_port)
@@ -112,11 +112,12 @@ class CodeBug(CodeBugRaw):
         s = StringSprite(message, direction)
         self.clear()
         for row_i, row in enumerate(s.led_state):
-            code_bug_led_row = 0
-            for col_i, state in enumerate(row):
-                if col_i + x >= 0 and col_i + x <= 4:
-                    code_bug_led_row |= state << 4 - (col_i + x)
-            self.set(4-row_i+y, code_bug_led_row)
+            if (row_i - y) >= 0 and (row_i - y) <= 4:
+                code_bug_led_row = 0
+                for col_i, state in enumerate(row):
+                    if col_i + x >= 0 and col_i + x <= 4:
+                        code_bug_led_row |= state << 4 - (col_i + x)
+                self.set(4-row_i+y, code_bug_led_row)
 
 
 def tx_rx_packet(packet, serial_port):
@@ -124,16 +125,16 @@ def tx_rx_packet(packet, serial_port):
     # print("Writing {} ({})".format(packet, time.time()))
     # print("data", packet.to_bytes())
     serial_port.write(packet.to_bytes())
-    if isinstance(packet, codebug_loader.packets.GetPacket):
+    if isinstance(packet, codebug_tether.packets.GetPacket):
         # just read 1 byte
         return struct.unpack('B', serial_port.read(1))[0]
 
-    elif (isinstance(packet, codebug_loader.packets.SetPacket) or
-          isinstance(packet, codebug_loader.packets.SetBulkPacket)):
+    elif (isinstance(packet, codebug_tether.packets.SetPacket) or
+          isinstance(packet, codebug_tether.packets.SetBulkPacket)):
         # just read 1 byte
         b = struct.unpack('B', serial_port.read(1))[0]
-        assert (b == codebug_loader.packets.AckPacket.ACK_BYTE)
+        assert (b == codebug_tether.packets.AckPacket.ACK_BYTE)
 
-    elif isinstance(packet, codebug_loader.packets.GetBulkPacket):
+    elif isinstance(packet, codebug_tether.packets.GetBulkPacket):
         return struct.unpack('B'*packet.length,
                              serial_port.read(packet.length))

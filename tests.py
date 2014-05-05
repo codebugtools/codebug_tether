@@ -106,17 +106,23 @@ class TestCodeBug(unittest.TestCase):
 
     def test_write_text(self):
         cb = CodeBug()
-        # msg = "Hello, CodeBug!"
-        # for i in range(len(msg) * 5 + 5):
-        #     cb.write_text(5 - i, 0, msg)
-        #     time.sleep(0.025)
+        msg = "Hello, CodeBug!"
+        delay = 0.025
+        for i in range(len(msg) * 5 + 5):
+            cb.write_text(5 - i, 0, msg)
+            time.sleep(delay)
 
-        # msg = "Test"
-        # for i in range(len(msg) * 6 + 6):
-        #     cb.write_text(0, 6 + i, msg, direction="down")
-        #     time.sleep(1)
-        cb.write_text(0, 0, "Te", direction="down")
-        # TEXT DIRECTION
+        for i in range(len(msg) * 6 + 6):
+            cb.write_text(0, i - 5, msg, direction="down")
+            time.sleep(delay)
+
+        for i in range(len(msg) * 5 + 5):
+            cb.write_text(0 - i, 0, msg, direction="left")
+            time.sleep(delay)
+
+        for i in range(len(msg) * 6 + 6):
+            cb.write_text(0, i - 5, msg, direction="up")
+            time.sleep(delay)
 
 
 class TestSprites(unittest.TestCase):
