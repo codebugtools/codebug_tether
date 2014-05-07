@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+v0.1.1
+------
+- Fixed CodeBug.get_input().
+
 v0.1.0
-======
+------
 Inital dev release.

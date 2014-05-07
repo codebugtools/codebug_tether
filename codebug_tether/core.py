@@ -58,7 +58,9 @@ class CodeBug(CodeBugRaw):
         super(CodeBug, self).__init__(serial.Serial(serial_port))
 
     def get_input(self, switch):
-        return self.get(INPUT_CHANNEL_INDEX)
+        if isinstance(switch, str):
+            switch = 4 if 'a' in switch.lower() else 5  # A is 4, B is 5
+        return (self.get(INPUT_CHANNEL_INDEX) >> switch) & 0x1
 
     def clear(self):
         """Clears the LED's on CodeBug."""

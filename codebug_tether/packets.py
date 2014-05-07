@@ -79,7 +79,7 @@ class SetPacket(object):
         +--------+---------------+---------+--------+--------+
         | cmd_id | channel index | OR mask | unused | value  |
         +--------+---------------+---------+--------+--------+
-        | 3 bits | 3 bits        | 2 bits  | 1 bit  | 1 byte |
+        | 3 bits | 3 bits        | 1 bits  | 1 bit  | 1 byte |
         +--------+---------------+---------+--------+--------+
 
     """

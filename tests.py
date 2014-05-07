@@ -6,14 +6,14 @@
 import time
 import serial
 import unittest
-from codebug_loader.core import (CodeBug, CodeBugRaw)
-from codebug_loader.char_map import (CharSprite, StringSprite)
+from codebug_tether.core import (CodeBug, CodeBugRaw)
+from codebug_tether.char_map import (CharSprite, StringSprite)
 
 
 class TestCodeBugRawObject(unittest.TestCase):
 
     def setUp(self):
-        self.codebug = CodeBug(serial.Serial('/dev/ttyACM0'))
+        self.codebug = CodeBugRaw(serial.Serial('/dev/ttyACM0'))
         # self.codebug = CodeBugRaw(serial.Serial('/dev/pts/4'))
         self.num_channels = 5
 
