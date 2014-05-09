@@ -57,10 +57,19 @@ class CodeBug(CodeBugRaw):
     def __init__(self, serial_port=DEFAULT_SERIAL_PORT):
         super(CodeBug, self).__init__(serial.Serial(serial_port))
 
-    def get_input(self, switch):
-        if isinstance(switch, str):
-            switch = 4 if 'a' in switch.lower() else 5  # A is 4, B is 5
-        return (self.get(INPUT_CHANNEL_INDEX) >> switch) & 0x1
+    def get_input(self, input_index):
+        """Returns the state of an input. You can use 'A' and 'B' to
+        access buttons A and B.
+
+            >>> codebug = CodeBug()
+            >>> codebug.get_input('A')
+            0
+
+        """
+        if isinstance(input_index, str):
+            # A is 4, B is 5
+            input_index = 4 if 'a' in input_index.lower() else 5
+        return (self.get(INPUT_CHANNEL_INDEX) >> input_index) & 0x1
 
     def clear(self):
         """Clears the LED's on CodeBug."""
