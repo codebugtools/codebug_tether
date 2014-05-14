@@ -16,12 +16,13 @@ def diceRoll():
 	return randint(1,6)
 
 if __name__ == '__main__':
-	cb = CodeBug('/dev/tty...')
+	cb = CodeBug('/dev/tty.usbmodemfa141')
 	cb.clear()
-	delay = 0.5
+	delay = 0.2
 	while True:
 		if cb.get_input("A"):
 			number = str(randint(int(sys.argv[1]), int(sys.argv[2])))
 			for i in range(len(number) * 5 + 5):
 				cb.write_text(5 - i, 0, number)
 				time.sleep(delay)
+			time.sleep(1)

@@ -147,7 +147,7 @@ void draw_codebug(void)
 {
     int i, j;
     char row[6] = {0, 0, 0, 0, 0, 0}; // sixth is EOL
-    for (i = 0; i <= 4; i++) {
+    for (i = 4; i >= 0; i--) {
         for (j = 0; j <= 4; j++) {
             row[4-j] = (rows[i] >> j) & 1 ? '#' : '-';
         }
