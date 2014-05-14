@@ -52,7 +52,9 @@ class CodeBugRaw(object):
 
 
 class CodeBug(CodeBugRaw):
-    """Adds fancy, easy-to-use features to CodeBugRaw."""
+    """Use this to manipulate CodeBug. Adds fancy, easy-to-use features
+    to CodeBugRaw.
+    """
 
     def __init__(self, serial_port=DEFAULT_SERIAL_PORT):
         super(CodeBug, self).__init__(serial.Serial(serial_port))
@@ -72,20 +74,37 @@ class CodeBug(CodeBugRaw):
         return (self.get(INPUT_CHANNEL_INDEX) >> input_index) & 0x1
 
     def clear(self):
-        """Clears the LED's on CodeBug."""
+        """Clears the LED's on CodeBug.
+
+            >>> codebug = CodeBug()
+            >>> codebug.clear()
+        """
         for row in range(5):
             self.set_row(row, 0)
 
     def set_row(self, row, val):
-        """Sets a row of LEDs on CodeBug."""
+        """Sets a row of LEDs on CodeBug.
+
+            >>> codebug = CodeBug()
+            >>> codebug.set_row(0, 0b10101)
+        """
         self.set(row, val)
 
     def get_row(self, row):
-        """Returns a row of LEDs on CodeBug."""
+        """Returns a row of LEDs on CodeBug.
+
+            >>> codebug = CodeBug()
+            >>> codebug.get_row(0)
+            21
+        """
         return self.get(row)
 
     def set_col(self, col, val):
-        """Sets an entire column of LEDs on CodeBug."""
+        """Sets an entire column of LEDs on CodeBug.
+
+            >>> codebug = CodeBug()
+            >>> codebug.set_col(0, 0b10101)
+        """
         # TODO add and_mask into set packet
         for row in range(5):
             state = (val >> (4 - row)) & 0x1  # state of column 1/0

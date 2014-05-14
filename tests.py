@@ -102,26 +102,29 @@ class TestCodeBugRawObject(unittest.TestCase):
     #     self.assertEqual(self.codebug.get_bulk(0, self.num_channels),
     #                      v)
 
-class TestCodeBug(unittest.TestCase):
+class TestCodeBug(TestCodeBugRawObject):
+
+    def setUp(self):
+        self.codebug = CodeBug('/dev/pts/5')
+        self.num_channels = 5
 
     def test_write_text(self):
-        cb = CodeBug()
         msg = "Hello, CodeBug!"
         delay = 0.025
         for i in range(len(msg) * 5 + 5):
-            cb.write_text(5 - i, 0, msg)
+            self.codebug.write_text(5 - i, 0, msg)
             time.sleep(delay)
 
         for i in range(len(msg) * 6 + 6):
-            cb.write_text(0, i - 5, msg, direction="down")
+            self.codebug.write_text(0, i - 5, msg, direction="down")
             time.sleep(delay)
 
         for i in range(len(msg) * 5 + 5):
-            cb.write_text(0 - i, 0, msg, direction="left")
+            self.codebug.write_text(0 - i, 0, msg, direction="left")
             time.sleep(delay)
 
         for i in range(len(msg) * 6 + 6):
-            cb.write_text(0, i - 5, msg, direction="up")
+            self.codebug.write_text(0, i - 5, msg, direction="up")
             time.sleep(delay)
 
 
