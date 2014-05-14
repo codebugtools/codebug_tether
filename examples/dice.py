@@ -40,7 +40,7 @@ sprites = [[0b00000,
 			0b10001,]]
 
 def diceRoll():
-	return randint(1,6)
+	return randint(0,5)
 
 def drawSprite(number):
 	sprite = sprites[number]
@@ -48,12 +48,14 @@ def drawSprite(number):
 		cb.set_row(i, row)
 
 if __name__ == '__main__':
-    cb = CodeBug('/dev/tty...')
+    cb = CodeBug()
     cb.clear()
     while True:
     	if cb.get_input("A"):
+    		cb.clear()
+    		time.sleep(.5)
     		drawSprite(diceRoll())
-    		time.sleep(2)
+    		time.sleep(1)
 
 
 

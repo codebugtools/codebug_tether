@@ -19,10 +19,9 @@ In terminal 1:
 In terminal 2:
 
     $ python3
-    >>> import serial
-    >>> from codebug_loader.core import CodeBug
+    >>> from codebug_tether import CodeBug
     >>>
-    >>> cb = CodeBug(serial.Serial('/dev/pts/4'))
+    >>> cb = CodeBug('/dev/pts/4')
     >>>
     >>> cb.set(0, 0b10101)
 

@@ -8,7 +8,7 @@ deb_dist
 
 # databases
 *.db
-
+.ds_store
 *.py[cod]
 
 # C extensions
