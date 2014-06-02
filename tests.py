@@ -10,6 +10,21 @@ from codebug_tether.core import (CodeBug, CodeBugRaw)
 from codebug_tether.char_map import (CharSprite, StringSprite)
 
 
+class TestCodeBugGet(unittest.TestCase):
+
+    def setUp(self):
+        # self.codebug = CodeBugRaw(serial.Serial('/dev/ttyACM0'))
+        self.codebug = CodeBugRaw(serial.Serial('/dev/pts/31'))
+        self.num_channels = 5
+
+    def test_set_get(self):
+        for i in range(self.num_channels):
+            self.codebug.set(i, (i*i) % 0x1F)
+
+        for i in range(self.num_channels):
+            self.assertEqual(self.codebug.get(i), (i*i) % 0x1F)
+
+
 class TestCodeBugRawObject(unittest.TestCase):
 
     def setUp(self):
@@ -105,7 +120,8 @@ class TestCodeBugRawObject(unittest.TestCase):
 class TestCodeBug(TestCodeBugRawObject):
 
     def setUp(self):
-        self.codebug = CodeBug('/dev/pts/5')
+        self.codebug = CodeBug('/dev/pts/29')
+        # self.codebug = CodeBug('/dev/ttyACM0')
         self.num_channels = 5
 
     def test_write_text(self):
@@ -139,6 +155,17 @@ class TestSprites(unittest.TestCase):
                     [1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0],
                     [1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0]]
         self.assertEqual(s.led_state, expected)
+
+
+class TestCodeBugInput(unittest.TestCase):
+
+    def setUp(self):
+        self.codebug = CodeBug('/dev/ttyACM0')
+        # self.codebug.set_pullup(0, 0)
+        # self.codebug.set_pullup(2, 0)
+
+    def test_get_input_channel(self):
+        print(bin(self.codebug.get(5)))
 
 
 if __name__ == "__main__":

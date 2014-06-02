@@ -7,7 +7,10 @@ from codebug_tether.char_map import (char_map, StringSprite)
 
 
 DEFAULT_SERIAL_PORT = '/dev/ttyACM0'
-INPUT_CHANNEL_INDEX = 5
+NUM_CHANNELS = 7
+OUTPUT_CHANNEL_INDEX = INPUT_CHANNEL_INDEX = 5
+# Pullups for Port B (Register: WPUB)
+PULLUP_CHANNEL_INDEX = 6
 
 
 class CodeBugRaw(object):
@@ -29,14 +32,17 @@ class CodeBugRaw(object):
 
     def __init__(self, serial_port):
         self.serial_port = serial_port
-        self.channels = [self.Channel(i, self) for i in range(6)]
+        self.channels = [self.Channel(i, self) for i in range(NUM_CHANNELS)]
 
     def get(self, index):
         get_packet = codebug_tether.packets.GetPacket(index)
         return tx_rx_packet(get_packet, self.serial_port)
 
-    def set(self, index, v, or_mask=False):
-        set_packet = codebug_tether.packets.SetPacket(index, v, or_mask)
+    def set(self, index, v, or_mask=False, and_mask=False):
+        set_packet = codebug_tether.packets.SetPacket(index,
+                                                      v,
+                                                      or_mask,
+                                                      and_mask)
         tx_rx_packet(set_packet, self.serial_port)
 
     def get_bulk(self, start_index, length):
@@ -44,10 +50,11 @@ class CodeBugRaw(object):
                                                             length)
         return tx_rx_packet(get_bulk_pkt, self.serial_port)
 
-    def set_bulk(self, start_index, values, or_mask=False):
+    def set_bulk(self, start_index, values, or_mask=False, and_mask=False):
         set_bulk_pkt = codebug_tether.packets.SetBulkPacket(start_index,
                                                             values,
-                                                            or_mask)
+                                                            or_mask,
+                                                            and_mask)
         tx_rx_packet(set_bulk_pkt, self.serial_port)
 
 
@@ -59,25 +66,54 @@ class CodeBug(CodeBugRaw):
     def __init__(self, serial_port=DEFAULT_SERIAL_PORT):
         super(CodeBug, self).__init__(serial.Serial(serial_port))
 
+    def _int_input_index(self, input_index):
+        """Returns an integer input index."""
+        # 'A' is 4, 'B' is 5
+        if isinstance(input_index, str):
+            input_index = 4 if 'a' in input_index.lower() else 5
+        return input_index
+
     def get_input(self, input_index):
         """Returns the state of an input. You can use 'A' and 'B' to
         access buttons A and B.
 
             >>> codebug = CodeBug()
-            >>> codebug.get_input('A')
+            >>> codebug.get_input('A')  # switch A is unpressed
             0
+            >>> codebug.get_input(0)  # assuming pad 0 is connected to GND
+            1
 
         """
-        if isinstance(input_index, str):
-            # A is 4, B is 5
-            input_index = 4 if 'a' in input_index.lower() else 5
+        input_index = self._int_input_index(input_index)
         return (self.get(INPUT_CHANNEL_INDEX) >> input_index) & 0x1
+
+    def set_pullup(self, input_index, state):
+        """Sets the state of the input pullups. Turn off to enable touch
+        sensitive pads (bridge GND and input with fingers).
+
+            >>> codebug = CodeBug()
+            >>> codebug.set_pullup(0, 1)  # input pad 0 <10KΩ
+            >>> codebug.set_pullup(2, 0)  # input pad 2 <22MΩ touch sensitive
+
+        """
+        state = 1 if state else 0
+        input_index = self._int_input_index(input_index)
+        self.set(PULLUP_CHANNEL_INDEX, state << input_index, or_mask=True)
+
+    def set_output(self, output_index, state):
+        """Sets the output index to state (CodeBug only have outputs 1 and 3)
+        """
+        state = 1 if state else 0
+        state <<= output_index
+        # print(bin(state))
+        self.set(OUTPUT_CHANNEL_INDEX, state, or_mask=True)
 
     def clear(self):
         """Clears the LED's on CodeBug.
 
             >>> codebug = CodeBug()
             >>> codebug.clear()
+
         """
         for row in range(5):
             self.set_row(row, 0)
@@ -87,6 +123,7 @@ class CodeBug(CodeBugRaw):
 
             >>> codebug = CodeBug()
             >>> codebug.set_row(0, 0b10101)
+
         """
         self.set(row, val)
 
@@ -96,6 +133,7 @@ class CodeBug(CodeBugRaw):
             >>> codebug = CodeBug()
             >>> codebug.get_row(0)
             21
+
         """
         return self.get(row)
 
@@ -104,6 +142,7 @@ class CodeBug(CodeBugRaw):
 
             >>> codebug = CodeBug()
             >>> codebug.set_col(0, 0b10101)
+
         """
         # TODO add and_mask into set packet
         for row in range(5):
@@ -117,14 +156,25 @@ class CodeBug(CodeBugRaw):
                 self.set(row, self.get(row) & mask)  # AND row with mask
 
     def get_col(self, col):
-        """Returns an entire column of LEDs on CodeBug."""
+        """Returns an entire column of LEDs on CodeBug.
+
+            >>> codebug = CodeBug()
+            >>> codebug.get_col(0)
+            21
+
+        """
         c = 0
         for row in range(5):
             c |= (self.get_row(row) >> (4 - col)) << (4-row)
         return c
 
     def set_led(self, x, y, state):
-        """Sets an LED on CodeBug."""
+        """Sets an LED on CodeBug.
+
+            >>> codebug = CodeBug()
+            >>> codebug.set_led(0, 0, 1)
+
+        """
         mask = 1 << (4 - x)  # bit mask to apply to row
         if state > 0:
             self.set(y, mask, or_mask=True)  # OR row with mask
@@ -134,11 +184,22 @@ class CodeBug(CodeBugRaw):
             self.set(y, self.get(y) & mask)  # AND row with mask
 
     def get_led(self, x, y):
-        """Returns the state of an LED on CodeBug."""
+        """Returns the state of an LED on CodeBug.
+
+            >>> codebug = CodeBug()
+            >>> codebug.get_led(0, 0)
+            1
+
+        """
         return (self.get(y) >> (4 - x)) & 0x1
 
     def write_text(self, x, y, message, direction="right"):
-        """Writes some text on CodeBug at LED (x, y)."""
+        """Writes some text on CodeBug at LED (x, y).
+
+            >>> codebug = CodeBug()
+            >>> codebug.write_text(0, 0, 'Hello, CodeBug!')
+
+        """
         s = StringSprite(message, direction)
         self.clear()
         for row_i, row in enumerate(s.led_state):

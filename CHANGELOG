@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+v0.2.0
+------
+- Added and_mask into set packets.
+
 v0.1.2
 ------
 - Added some more examples.

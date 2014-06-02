@@ -76,38 +76,42 @@ class SetPacket(object):
 
     Structure:
 
-        +--------+---------------+---------+--------+--------+
-        | cmd_id | channel index | OR mask | unused | value  |
-        +--------+---------------+---------+--------+--------+
-        | 3 bits | 3 bits        | 1 bits  | 1 bit  | 1 byte |
-        +--------+---------------+---------+--------+--------+
+        +--------+---------------+---------+----------+--------+
+        | cmd_id | channel index | OR mask | AND mask | value  |
+        +--------+---------------+---------+----------+--------+
+        | 3 bits | 3 bits        | 1 bits  | 1 bit    | 1 byte |
+        +--------+---------------+---------+----------+--------+
 
     """
 
-    def __init__(self, channel_index, value, or_mask=False):
+    def __init__(self, channel_index, value, or_mask=False, and_mask=False):
         self.cmd_id = CMD_SET
         self.channel_index = channel_index
         self.value = value
         self.or_mask = int(or_mask)
+        self.and_mask = int(and_mask)
 
     def __str__(self):
         return "set ch{} to {}".format(self.channel_index, self.value)
 
     def __repr__(self):
-        return "<SetPacket(channel_index={},value={},or_mask={})>".format(
-            self.channel_index,
-            hex(self.value),
-            self.or_mask)
+        return "<SetPacket(channel_index={},value={},or_mask={},and_mask={})>"\
+            .format(self.channel_index,
+                    hex(self.value),
+                    self.or_mask,
+                    self.and_mask)
 
     def to_bytes(self):
         self.cmd_id &= 0b111
         self.channel_index &= 0b111
         self.value &= 0xff
         self.or_mask &= 0x1
+        self.and_mask &= 0x1
         return struct.pack('BB',
                            (self.cmd_id << 5 |
                             self.channel_index << 2 |
-                            self.or_mask << 1),
+                            self.or_mask << 1 |
+                            self.and_mask),
                            self.value)
 
 
@@ -160,20 +164,25 @@ class SetBulkPacket(object):
 
     Structure:
 
-        +--------+---------------------+--------+--------+------------+
-        | cmd_id | start channel index | unused | length | values     |
-        +--------+---------------------+--------+--------+------------+
-        | 3 bits | 3 bits              | 2 bits | 1 byte | 1+ byte(s) |
-        +--------+---------------------+--------+--------+------------+
+        +--------+-----------------+---------+----------+-----+------------+
+        | cmd_id | start ch. index | OR mask | AND mask | len | values     |
+        +--------+-----------------+---------+----------+-----+------------+
+        | 3 bits | 3 bits          | 1 bit   | 1 bit    | 1B  | 1+ byte(s) |
+        +--------+-----------------+---------+----------+-----+------------+
 
     """
 
-    def __init__(self, start_channel_index, values, or_mask=False):
+    def __init__(self,
+                 start_channel_index,
+                 values,
+                 or_mask=False,
+                 and_mask=False):
         self.cmd_id = CMD_SET_BULK
         self.start_channel_index = start_channel_index
         self.length = len(values)
         self.values = values
         self.or_mask = int(or_mask)
+        self.and_mask = int(and_mask)
 
     def __str__(self):
         return "set {} channels from ch{} to {}".format(
@@ -188,10 +197,12 @@ class SetBulkPacket(object):
         self.start_channel_index &= 0b111
         self.length &= 0xff
         self.or_mask &= 0x1
+        self.and_mask &= 0x1
         return struct.pack('BB',
                            (self.cmd_id << 5 |
                             self.start_channel_index << 2 |
-                            self.or_mask << 1),
+                            self.or_mask << 1 |
+                            self.and_mask),
                            self.length) + bytes(self.values)
 
 
