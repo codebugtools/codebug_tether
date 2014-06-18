@@ -92,8 +92,8 @@ class CodeBug(CodeBugRaw):
         sensitive pads (bridge GND and input with fingers).
 
             >>> codebug = CodeBug()
-            >>> codebug.set_pullup(0, 1)  # input pad 0 <10KΩ
-            >>> codebug.set_pullup(2, 0)  # input pad 2 <22MΩ touch sensitive
+            >>> codebug.set_pullup(0, 1)  # input pad 0 <10K OHMS
+            >>> codebug.set_pullup(2, 0)  # input pad 2 <22M OHMS touch sensitive
 
         """
         state = 1 if state else 0
