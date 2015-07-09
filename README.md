@@ -1,10 +1,8 @@
 CodeBug Tether
 ==============
-Can control a tethered CodeBug by sending GET/SET/BULK messages.
+Can control CodeBug tethered over Serial USB.
 
-Documentation:
-
-Depends on `python3-serial` (or `python-serial`).
+Documentation: http://codebug-tether.readthedocs.org/
 
 
 CodeBug Loader RX (cblrx)

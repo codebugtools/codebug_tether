@@ -14,6 +14,9 @@ In order to communicate with CodeBug over Serial USB you need to program CodeBug
 should appear as a USB drive --- then copy onto it the
 ``codebug_tether.cbg`` file. CodeBug is now ready to be used via Serial USB.
 
+CodeBug Tether depends on pyserial. It is reccomended that you install
+using virtual environments.
+
 
 Installing with ``pip``
 -----------------------
@@ -27,7 +30,7 @@ Make sure ``pip`` is installed::
 
 Install ``codebug_tether`` using ``pip``::
 
-    sudo pip-3.2 install codebug_tether
+    sudo pip-3.2 install pyserial codebug_tether
 
 
 Installing with ``pip`` (with Virtual Environments)
@@ -53,7 +56,7 @@ You should notice that your command prompt has changed. ``pip`` will now
 install all packages into the virtual environment instead of littering
 your system files::
 
-    pip install codebug_tether
+    pip install pyserial codebug_tether
 
 Now you can work on your application with ``codebug_tether``. Once
 you're done, deactivate the virtual environment::
