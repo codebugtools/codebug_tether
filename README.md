@@ -2,6 +2,8 @@ CodeBug Tether
 ==============
 Can control a tethered CodeBug by sending GET/SET/BULK messages.
 
+Documentation:
+
 Depends on `python3-serial` (or `python-serial`).
 
 

@@ -1,9 +1,3 @@
-# only needed for testing
-import os
-import sys
-parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, parentdir)
-
 from codebug_tether import CodeBug
 import time
 

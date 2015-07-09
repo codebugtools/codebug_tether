@@ -13,8 +13,8 @@ from codebug_tether.char_map import (CharSprite, StringSprite)
 class TestCodeBugGet(unittest.TestCase):
 
     def setUp(self):
-        # self.codebug = CodeBugRaw(serial.Serial('/dev/ttyACM0'))
-        self.codebug = CodeBugRaw(serial.Serial('/dev/pts/31'))
+        self.codebug = CodeBugRaw(serial.Serial('/dev/ttyACM0'))
+        # self.codebug = CodeBugRaw(serial.Serial('/dev/pts/31'))
         self.num_channels = 5
 
     def test_set_get(self):
@@ -31,19 +31,6 @@ class TestCodeBugRawObject(unittest.TestCase):
         self.codebug = CodeBugRaw(serial.Serial('/dev/ttyACM0'))
         # self.codebug = CodeBugRaw(serial.Serial('/dev/pts/4'))
         self.num_channels = 5
-
-    # @unittest.skip
-    def test_channels(self):
-        """
-            >>> codebug.channels[1].value = 2
-            >>> codebug.channels[1].value
-            2
-        """
-        for i in range(self.num_channels):
-            self.codebug.channels[i].value = (i*i) % 0x1F
-
-        for i in range(self.num_channels):
-            self.assertEqual(self.codebug.channels[i].value, (i*i) % 0x1F)
 
     # @unittest.skip
     def test_channels_get_set(self):
@@ -120,8 +107,8 @@ class TestCodeBugRawObject(unittest.TestCase):
 class TestCodeBug(TestCodeBugRawObject):
 
     def setUp(self):
-        self.codebug = CodeBug('/dev/pts/29')
-        # self.codebug = CodeBug('/dev/ttyACM0')
+        # self.codebug = CodeBug('/dev/pts/29')
+        self.codebug = CodeBug('/dev/ttyACM0')
         self.num_channels = 5
 
     def test_write_text(self):

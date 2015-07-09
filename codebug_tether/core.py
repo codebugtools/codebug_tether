@@ -16,23 +16,8 @@ PULLUP_CHANNEL_INDEX = 6
 class CodeBugRaw(object):
     """Represents a CodeBug. Doesn't have fancy easy-to-use features."""
 
-    class Channel(object):
-        """A channel on a CodeBug."""
-        def __init__(self, index, codebug_inst):
-            self.index = index
-            self.cbinst = codebug_inst
-
-        @property
-        def value(self):
-            return self.cbinst.get(self.index)
-
-        @value.setter
-        def value(self, v):
-            self.cbinst.set(self.index, v)
-
     def __init__(self, serial_port):
         self.serial_port = serial_port
-        self.channels = [self.Channel(i, self) for i in range(NUM_CHANNELS)]
 
     def get(self, index):
         get_packet = codebug_tether.packets.GetPacket(index)
@@ -59,9 +44,8 @@ class CodeBugRaw(object):
 
 
 class CodeBug(CodeBugRaw):
-    """Use this to manipulate CodeBug. Adds fancy, easy-to-use features
-    to CodeBugRaw.
-    """
+    """Manipulates CodeBug over a USB serial connection."""
+    # Adds fancy, easy-to-use features to CodeBugRaw.
 
     def __init__(self, serial_port=DEFAULT_SERIAL_PORT):
         super(CodeBug, self).__init__(serial.Serial(serial_port))
@@ -78,10 +62,10 @@ class CodeBug(CodeBugRaw):
         access buttons A and B.
 
             >>> codebug = CodeBug()
-            >>> codebug.get_input('A')  # switch A is unpressed
-            0
-            >>> codebug.get_input(0)  # assuming pad 0 is connected to GND
+            >>> codebug.get_input('A')  # switch A is pressed
             1
+            >>> codebug.get_input(0)  # assuming pad 0 is connected to GND
+            0
 
         """
         input_index = self._int_input_index(input_index)
