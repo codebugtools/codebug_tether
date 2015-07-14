@@ -10,7 +10,7 @@ You can use the ``codebug_tether`` Python 3 API by either:
 Setting up CodeBug
 ------------------
 In order to communicate with CodeBug over Serial USB you need to program CodeBug with
-``codebug_tether.cbg``. To do this, plug in CodeBug via USB --- it
+``codebug_tether.cbg`` (you can find this in the ``firmware/`` directory of this project). To do this, plug in CodeBug via USB --- it
 should appear as a USB drive --- then copy onto it the
 ``codebug_tether.cbg`` file. CodeBug is now ready to be used via Serial USB.
 
@@ -20,9 +20,7 @@ using virtual environments.
 
 Installing with ``pip``
 -----------------------
-.. warning:: Do not install ``codebug_tether`` with both ``apt-get``
-             and ``pip`` as unexpected things will happen. Consider using
-             virtual environments.
+.. warning:: Consider using virtual environments.
 
 Make sure ``pip`` is installed::
 
