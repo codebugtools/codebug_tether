@@ -6,16 +6,22 @@ You can use the ``codebug_tether`` Python 3 API by either:
 * Installing with ``pip``
 * Copying the ``codebug_tether`` module into your project directory.
 
+CodeBug Tether depends on pyserial.
+
+It is reccomended that you install using virtual environments.
+
 
 Setting up CodeBug
 ------------------
 In order to communicate with CodeBug over Serial USB you need to program CodeBug with
-``codebug_tether.cbg`` (you can find this in the ``firmware/`` directory of this project). To do this, plug in CodeBug via USB --- it
+``codebug_tether.cbg`` (you can find this in the ``firmware/`` directory of this project). To do this, plug in CodeBug via USB while holding button A --- it
 should appear as a USB drive --- then copy onto it the
 ``codebug_tether.cbg`` file. CodeBug is now ready to be used via Serial USB.
+Press button B to exit programming mode.
 
-CodeBug Tether depends on pyserial. It is reccomended that you install
-using virtual environments.
+When CodeBug is connected to a computer via USB is should now appear as a
+serial device (``/dev/ttyACM0`` on Linux).
+
 
 
 Installing with ``pip``
