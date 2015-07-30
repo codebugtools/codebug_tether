@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+v0.4.0
+------
+- Changed led -> pixel
+
 v0.3.0
 ------
 - Removed confusing channel list.

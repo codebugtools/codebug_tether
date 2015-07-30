@@ -93,7 +93,7 @@ class CodeBug(CodeBugRaw):
         self.set(OUTPUT_CHANNEL_INDEX, state, or_mask=True)
 
     def clear(self):
-        """Clears the LED's on CodeBug.
+        """Clears the pixels on CodeBug.
 
             >>> codebug = CodeBug()
             >>> codebug.clear()
@@ -103,7 +103,7 @@ class CodeBug(CodeBugRaw):
             self.set_row(row, 0)
 
     def set_row(self, row, val):
-        """Sets a row of LEDs on CodeBug.
+        """Sets a row of PIXELs on CodeBug.
 
             >>> codebug = CodeBug()
             >>> codebug.set_row(0, 0b10101)
@@ -112,7 +112,7 @@ class CodeBug(CodeBugRaw):
         self.set(row, val)
 
     def get_row(self, row):
-        """Returns a row of LEDs on CodeBug.
+        """Returns a row of pixels on CodeBug.
 
             >>> codebug = CodeBug()
             >>> codebug.get_row(0)
@@ -122,7 +122,7 @@ class CodeBug(CodeBugRaw):
         return self.get(row)
 
     def set_col(self, col, val):
-        """Sets an entire column of LEDs on CodeBug.
+        """Sets an entire column of PIXELs on CodeBug.
 
             >>> codebug = CodeBug()
             >>> codebug.set_col(0, 0b10101)
@@ -140,7 +140,7 @@ class CodeBug(CodeBugRaw):
                 self.set(row, self.get(row) & mask)  # AND row with mask
 
     def get_col(self, col):
-        """Returns an entire column of LEDs on CodeBug.
+        """Returns an entire column of PIXELs on CodeBug.
 
             >>> codebug = CodeBug()
             >>> codebug.get_col(0)
@@ -152,11 +152,11 @@ class CodeBug(CodeBugRaw):
             c |= (self.get_row(row) >> (4 - col)) << (4-row)
         return c
 
-    def set_led(self, x, y, state):
-        """Sets an LED on CodeBug.
+    def set_pixel(self, x, y, state):
+        """Sets an PIXEL on CodeBug.
 
             >>> codebug = CodeBug()
-            >>> codebug.set_led(0, 0, 1)
+            >>> codebug.set_pixel(0, 0, 1)
 
         """
         mask = 1 << (4 - x)  # bit mask to apply to row
@@ -167,18 +167,18 @@ class CodeBug(CodeBugRaw):
             mask ^= 0x1f
             self.set(y, self.get(y) & mask)  # AND row with mask
 
-    def get_led(self, x, y):
-        """Returns the state of an LED on CodeBug.
+    def get_pixel(self, x, y):
+        """Returns the state of an PIXEL on CodeBug.
 
             >>> codebug = CodeBug()
-            >>> codebug.get_led(0, 0)
+            >>> codebug.get_pixel(0, 0)
             1
 
         """
         return (self.get(y) >> (4 - x)) & 0x1
 
     def write_text(self, x, y, message, direction="right"):
-        """Writes some text on CodeBug at LED (x, y).
+        """Writes some text on CodeBug at PIXEL (x, y).
 
             >>> codebug = CodeBug()
             >>> codebug.write_text(0, 0, 'Hello, CodeBug!')
@@ -186,13 +186,13 @@ class CodeBug(CodeBugRaw):
         """
         s = StringSprite(message, direction)
         self.clear()
-        for row_i, row in enumerate(s.led_state):
+        for row_i, row in enumerate(s.pixel_state):
             if (row_i - y) >= 0 and (row_i - y) <= 4:
-                code_bug_led_row = 0
+                code_bug_pixel_row = 0
                 for col_i, state in enumerate(row):
                     if col_i + x >= 0 and col_i + x <= 4:
-                        code_bug_led_row |= state << 4 - (col_i + x)
-                self.set(4-row_i+y, code_bug_led_row)
+                        code_bug_pixel_row |= state << 4 - (col_i + x)
+                self.set(4-row_i+y, code_bug_pixel_row)
 
 
 def tx_rx_packet(packet, serial_port):
