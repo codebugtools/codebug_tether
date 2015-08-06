@@ -113,7 +113,7 @@ class CharSprite(object):
         self.char = char
         if char not in char_map:
             char = 'unknown'
-        self.led_state = [[(char_map[char][row] >> shift) & 0x1
+        self.pixel_state = [[(char_map[char][row] >> shift) & 0x1
                            for shift in reversed(range(4))]
                           for row in range(5)]
 
