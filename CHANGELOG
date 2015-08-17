@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+v0.4.1
+------
+- Added timeout to serial initialisation and updated charmap `led_state`
+  to `pixel_state` to match previous change.
+
 v0.4.0
 ------
 - Changed led -> pixel
