@@ -9,8 +9,9 @@ from codebug_tether.char_map import (char_map, StringSprite)
 DEFAULT_SERIAL_PORT = '/dev/ttyACM0'
 NUM_CHANNELS = 7
 OUTPUT_CHANNEL_INDEX = INPUT_CHANNEL_INDEX = 5
+IO_DIRECTION_CHANNEL = 6
 # Pullups for Port B (Register: WPUB)
-PULLUP_CHANNEL_INDEX = 6
+PULLUP_CHANNEL_INDEX = 7
 
 
 class CodeBugRaw(object):
@@ -48,7 +49,7 @@ class CodeBug(CodeBugRaw):
     # Adds fancy, easy-to-use features to CodeBugRaw.
 
     def __init__(self, serial_port=DEFAULT_SERIAL_PORT):
-        super(CodeBug, self).__init__(serial.Serial(serial_port),timeout=2)
+        super(CodeBug, self).__init__(serial.Serial(serial_port, timeout=2))
 
     def _int_input_index(self, input_index):
         """Returns an integer input index."""
@@ -91,6 +92,12 @@ class CodeBug(CodeBugRaw):
         state <<= output_index
         # print(bin(state))
         self.set(OUTPUT_CHANNEL_INDEX, state, or_mask=True)
+
+    def set_leg_io(self, leg_index, direction):
+        """Sets the I/O direction of the leg at index."""
+        # io_config_state = leg_index in upper nibble and state in lower nibble
+        io_config_state = ((leg_index << 4) & 0xf0) | (direction & 0x0f)
+        self.set(IO_DIRECTION_CHANNEL, io_config_state)
 
     def clear(self):
         """Clears the pixels on CodeBug.
