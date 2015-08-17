@@ -48,7 +48,7 @@ class CodeBug(CodeBugRaw):
     # Adds fancy, easy-to-use features to CodeBugRaw.
 
     def __init__(self, serial_port=DEFAULT_SERIAL_PORT):
-        super(CodeBug, self).__init__(serial.Serial(serial_port))
+        super(CodeBug, self).__init__(serial.Serial(serial_port),timeout=2)
 
     def _int_input_index(self, input_index):
         """Returns an integer input index."""
