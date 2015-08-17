@@ -5,6 +5,7 @@ v0.4.1
 ------
 - Added timeout to serial initialisation and updated charmap `led_state`
   to `pixel_state` to match previous change.
+- Added `set_leg_io` method.
 
 v0.4.0
 ------
