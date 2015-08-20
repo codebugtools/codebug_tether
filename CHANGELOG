@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+v0.4.2
+------
+- Fixed `set_output()` but where setting value of one leg would reset
+  the other legs.
+
 v0.4.1
 ------
 - Added timeout to serial initialisation and updated charmap `led_state`

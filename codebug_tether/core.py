@@ -7,11 +7,11 @@ from codebug_tether.char_map import (char_map, StringSprite)
 
 
 DEFAULT_SERIAL_PORT = '/dev/ttyACM0'
-NUM_CHANNELS = 7
-OUTPUT_CHANNEL_INDEX = INPUT_CHANNEL_INDEX = 5
-IO_DIRECTION_CHANNEL = 6
+OUTPUT_CHANNEL_INDEX = 5
+INPUT_CHANNEL_INDEX = 6
+IO_DIRECTION_CHANNEL = 7
 # Pullups for Port B (Register: WPUB)
-PULLUP_CHANNEL_INDEX = 7
+PULLUP_CHANNEL_INDEX = 8
 
 
 class CodeBugRaw(object):
