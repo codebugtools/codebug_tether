@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+v0.4.3
+------
+- Updated docs.
+
 v0.4.2
 ------
 - Fixed `set_output()` but where setting value of one leg would reset

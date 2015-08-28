@@ -2,10 +2,10 @@ Welcome to CodeBug Tether's documentation!
 ==============================================
 
 The codebug_tether Python module provides classes for
-interacting with PiFace Digital.
+interacting with CodeBug over USB Serial.
 
 Links:
-    - `Website <http://codebug.openlx.org.uk>`_
+    - `The CodeBug Website <http://codebug.openlx.org.uk>`_
 
 Contents:
 
