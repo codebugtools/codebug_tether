@@ -156,7 +156,7 @@ class CodeBug(CodeBugRaw):
         """
         c = 0
         for row in range(5):
-            c |= (self.get_row(row) >> (4 - col)) << (4-row)
+            c |= ((self.get_row(row) >> (4- col)) & 1) << (4 - row)
         return c
 
     def set_pixel(self, x, y, state):
