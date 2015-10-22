@@ -2,7 +2,16 @@ import os
 import time
 import serial
 import struct
-import codebug_tether.packets
+from codebug_tether.packets import (packet_to_bytes,
+                                    ACK_BYTE,
+                                    GetPacket,
+                                    SetPacket,
+                                    GetBulkPacket,
+                                    SetBulkPacket,
+                                    AndPacket,
+                                    OrPacket,
+                                    AndBulkPacket,
+                                    OrBulkPacket)
 from codebug_tether.char_map import (char_map, StringSprite)
 
 
@@ -14,37 +23,55 @@ IO_DIRECTION_CHANNEL = 7
 PULLUP_CHANNEL_INDEX = 8
 
 
-class CodeBugRaw(object):
-    """Represents a CodeBug. Doesn't have fancy easy-to-use features."""
+class SerialChannelDevice():
+    """A serial device with channels to GET/SET."""
 
     def __init__(self, serial_port):
         self.serial_port = serial_port
 
     def get(self, index):
-        get_packet = codebug_tether.packets.GetPacket(index)
-        return tx_rx_packet(get_packet, self.serial_port)
+        return self.tx_rx_packet(GetPacket(channel=index))
 
-    def set(self, index, v, or_mask=False, and_mask=False):
-        set_packet = codebug_tether.packets.SetPacket(index,
-                                                      v,
-                                                      or_mask,
-                                                      and_mask)
-        tx_rx_packet(set_packet, self.serial_port)
+    def set(self, index, value):
+        self.tx_rx_packet(SetPacket(index, value))
 
     def get_bulk(self, start_index, length):
-        get_bulk_pkt = codebug_tether.packets.GetBulkPacket(start_index,
-                                                            length)
-        return tx_rx_packet(get_bulk_pkt, self.serial_port)
+        return self.tx_rx_packet(GetBulkPacket(start_index, length))
 
-    def set_bulk(self, start_index, values, or_mask=False, and_mask=False):
-        set_bulk_pkt = codebug_tether.packets.SetBulkPacket(start_index,
-                                                            values,
-                                                            or_mask,
-                                                            and_mask)
-        tx_rx_packet(set_bulk_pkt, self.serial_port)
+    def set_bulk(self, start_index, values):
+        self.tx_rx_packet(SetBulkPacket(start_index, values))
+
+    def and_mask(self, index, mask):
+        self.tx_rx_packet(AndPacket(index, mask))
+
+    def or_mask(self, index, mask):
+        self.tx_rx_packet(OrPacket(index, mask))
+
+    def and_mask_bulk(self, start_index, masks):
+        self.tx_rx_packet(AndBulkPacket(start_index, masks))
+
+    def or_mask_bulk(self, start_index, masks):
+        self.tx_rx_packet(OrBulkPacket(start_index, masks))
+
+    def tx_rx_packet(self, packet):
+        """Sends a packet and waits for a response."""
+        # Send the packet
+        self.serial_port.write(packet_to_bytes(packet))
+
+        # CodeBug will always return an ACK byte
+        assert self.serial_port.read(1)[0] == ACK_BYTE
+
+        # GET commands will now have extra data returned
+        if type(packet) == GetPacket:
+            # just read 1 byte
+            return struct.unpack('B', self.serial_port.read(1))[0]
+
+        elif type(packet) == GetBulkPacket:
+            return struct.unpack('B'*packet.length,
+                                 self.serial_port.read(packet.length))
 
 
-class CodeBug(CodeBugRaw):
+class CodeBug(SerialChannelDevice):
     """Manipulates CodeBug over a USB serial connection."""
     # Adds fancy, easy-to-use features to CodeBugRaw.
 
@@ -200,23 +227,3 @@ class CodeBug(CodeBugRaw):
                     if col_i + x >= 0 and col_i + x <= 4:
                         code_bug_pixel_row |= state << 4 - (col_i + x)
                 self.set(4-row_i+y, code_bug_pixel_row)
-
-
-def tx_rx_packet(packet, serial_port):
-    """Sends a packet and waits for a response."""
-    # print("Writing {} ({})".format(packet, time.time()))
-    # print("data", packet.to_bytes())
-    serial_port.write(packet.to_bytes())
-    if isinstance(packet, codebug_tether.packets.GetPacket):
-        # just read 1 byte
-        return struct.unpack('B', serial_port.read(1))[0]
-
-    elif (isinstance(packet, codebug_tether.packets.SetPacket) or
-          isinstance(packet, codebug_tether.packets.SetBulkPacket)):
-        # just read 1 byte
-        b = struct.unpack('B', serial_port.read(1))[0]
-        assert (b == codebug_tether.packets.AckPacket.ACK_BYTE)
-
-    elif isinstance(packet, codebug_tether.packets.GetBulkPacket):
-        return struct.unpack('B'*packet.length,
-                             serial_port.read(packet.length))

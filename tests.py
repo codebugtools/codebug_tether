@@ -6,15 +6,14 @@
 import time
 import serial
 import unittest
-from codebug_tether.core import (CodeBug, CodeBugRaw)
+from codebug_tether.core import (CodeBug, SerialChannelDevice)
 from codebug_tether.char_map import (CharSprite, StringSprite)
 
 
 class TestCodeBugGet(unittest.TestCase):
 
     def setUp(self):
-        self.codebug = CodeBugRaw(serial.Serial('/dev/ttyACM0'))
-        # self.codebug = CodeBugRaw(serial.Serial('/dev/pts/31'))
+        self.codebug = SerialChannelDevice(serial.Serial())
         self.num_channels = 5
 
     def test_set_get(self):
@@ -25,11 +24,11 @@ class TestCodeBugGet(unittest.TestCase):
             self.assertEqual(self.codebug.get(i), (i*i) % 0x1F)
 
 
-class TestCodeBugRawObject(unittest.TestCase):
+class TestSerialChannelDeviceObject(unittest.TestCase):
 
     def setUp(self):
-        self.codebug = CodeBugRaw(serial.Serial('/dev/ttyACM0'))
-        # self.codebug = CodeBugRaw(serial.Serial('/dev/pts/4'))
+        self.codebug = SerialChannelDevice(serial.Serial('/dev/ttyACM0'))
+        # self.codebug = SerialChannelDevice(serial.Serial('/dev/pts/4'))
         self.num_channels = 5
 
     # @unittest.skip
@@ -88,27 +87,10 @@ class TestCodeBugRawObject(unittest.TestCase):
         print("A is {}, B is {}".format(a, b))
 
 
-    # @unittest.skip
-    # def test_channel_read_write(self):
-    #     """
-    #         >>> codebug.write(0x300, data)
-    #         >>> codebug.read(0x300, 0x400)
-    #     """
-    #     v = list(range(self.num_channels))
-    #     self.codebug.set_bulk(0, v)
-    #     self.assertEqual(self.codebug.get_bulk(0, len(v)), v)
-
-    #     v[2] = 0b01101
-    #     v[3] = 0b01011
-    #     self.codebug.set_bulk(2, v[2:4])
-    #     self.assertEqual(self.codebug.get_bulk(0, self.num_channels),
-    #                      v)
-
-class TestCodeBug(TestCodeBugRawObject):
+class TestCodeBug(unittest.TestCase):
 
     def setUp(self):
-        # self.codebug = CodeBug('/dev/pts/29')
-        self.codebug = CodeBug('/dev/ttyACM0')
+        self.codebug = CodeBug()
         self.num_channels = 5
 
     def test_write_text(self):

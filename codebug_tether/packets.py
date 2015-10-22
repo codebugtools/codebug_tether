@@ -1,275 +1,184 @@
-import struct
+'''
+Data structures and functions for converting between packets and raw bytes
+for interaction with CodeBug Serial USB Tether.
 
+Send packets to CodeBug over serial and CodeBug returns an ACK byte
+followed by data, if requested. For example:
+
+    get_ch1_pkt = packets.GetPacket(1)
+    serial_tx(packets.packet_to_bytes(get_ch1_pkt))
+    rx = serial_rx(2)
+    assert(rx[0] == packets.ACK_BYTE)
+    ch1_value = rx[1]
+
+'''
+import struct
+from collections import namedtuple
+
+
+ACK_BYTE = 0xCB
 
 CMD_GET = 0
 CMD_SET = 1
 CMD_GET_BULK = 2
 CMD_SET_BULK = 3
-CMD_READ = 4
-CMD_WRITE = 5
-CMD_ACK = 6
+CMD_AND = 4
+CMD_OR = 5
+CMD_AND_BULK = 6
+CMD_OR_BULK = 7
 
 
-class AckPacket(object):
-    """ACK for set/write packets (client waits for ack, otherwise timing
-    gets out of sync)
+GetPacket = namedtuple('GetPacket', 'channel')
+SetPacket = namedtuple('SetPacket', ['channel', 'value'])
+GetBulkPacket = namedtuple('GetBulkPacket', ['channel', 'length'])
+SetBulkPacket = namedtuple('SetBulkPacket', ['channel', 'values'])
+AndPacket = namedtuple('AndPacket', ['channel', 'mask'])
+OrPacket = namedtuple('OrPacket', ['channel', 'mask'])
+AndBulkPacket = namedtuple('AndBulkPacket', ['channel', 'masks'])
+OrBulkPacket = namedtuple('OrBulkPacket', ['channel', 'masks'])
 
-    Structure:
 
-        +--------+--------+
-        | cmd_id | unused |
-        +--------+--------+
-        | 3 bits | 5 bits |
-        +--------+--------+
+def getpacket_to_bytes(packet):
+    """Returns GetPacket as bytes.
+
+    GET packet is for retreiving channel values.
+
+        +--------+---------------+
+        | cmd_id | channel index |
+        +--------+---------------+
+        | 3 bits | 5 bits        |
+        +--------+---------------+
 
     """
-
-    ACK_BYTE = CMD_ACK << 5
-
-    def __init__(self):
-        self.cmd_id = CMD_ACK
-
-    def __str__(self):
-        return "ack"
-
-    def __repr__(self):
-        return "<AckPacket()>"
-
-    def to_bytes(self):
-        self.cmd_id &= 0b111
-        return struct.pack('B', self.cmd_id << 5)
+    return struct.pack('B', (CMD_GET << 5) | (packet.channel & 0x1f))
 
 
+def setpacket_to_bytes(packet):
+    """Returns SetPacket as bytes.
 
-class GetPacket(object):
-    """GET packet for retreiving channel values.
-
-    Structure:
+    SET packet for setting channel values.
 
         +--------+---------------+--------+
-        | cmd_id | channel index | unused |
+        | cmd_id | channel index | value  |
         +--------+---------------+--------+
-        | 3 bits | 3 bits        | 2 bits |
+        | 3 bits | 5 bits        | 1 byte |
         +--------+---------------+--------+
 
     """
-
-    def __init__(self, channel_index):
-        self.cmd_id = CMD_GET
-        self.channel_index = channel_index
-
-    def __str__(self):
-        return "get ch{}".format(self.channel_index)
-
-    def __repr__(self):
-        return "<GetPacket(channel_index={})>".format(self.channel_index)
-
-    def to_bytes(self):
-        self.cmd_id &= 0b111
-        self.channel_index &= 0b111
-        return struct.pack('B', self.cmd_id << 5 | self.channel_index << 2)
+    return struct.pack('BB',
+                       (CMD_SET << 5 | packet.channel & 0x1f),
+                       packet.value)
 
 
-class SetPacket(object):
-    """SET packet for setting channel values. When OR mask is set,
-    0 bits are ignored and only 1's are set.
-
-    Structure:
-
-        +--------+---------------+---------+----------+--------+
-        | cmd_id | channel index | OR mask | AND mask | value  |
-        +--------+---------------+---------+----------+--------+
-        | 3 bits | 3 bits        | 1 bits  | 1 bit    | 1 byte |
-        +--------+---------------+---------+----------+--------+
-
-    """
-
-    def __init__(self, channel_index, value, or_mask=False, and_mask=False):
-        self.cmd_id = CMD_SET
-        self.channel_index = channel_index
-        self.value = value
-        self.or_mask = int(or_mask)
-        self.and_mask = int(and_mask)
-
-    def __str__(self):
-        return "set ch{} to {}".format(self.channel_index, self.value)
-
-    def __repr__(self):
-        return "<SetPacket(channel_index={},value={},or_mask={},and_mask={})>"\
-            .format(self.channel_index,
-                    hex(self.value),
-                    self.or_mask,
-                    self.and_mask)
-
-    def to_bytes(self):
-        self.cmd_id &= 0b111
-        self.channel_index &= 0b111
-        self.value &= 0xff
-        self.or_mask &= 0x1
-        self.and_mask &= 0x1
-        return struct.pack('BB',
-                           (self.cmd_id << 5 |
-                            self.channel_index << 2 |
-                            self.or_mask << 1 |
-                            self.and_mask),
-                           self.value)
-
-
-class GetBulkPacket(object):
+def getbulkpacket_to_bytes(packet):
     """GET BULK packet for retrieving multiple adjacent channel values
     in one go.
 
-    Structure:
-
-        +--------+---------------------+--------+--------+
-        | cmd_id | start channel index | unused | length |
-        +--------+---------------------+--------+--------+
-        | 3 bits | 3 bits              | 2 bits | 1 byte |
-        +--------+---------------------+--------+--------+
+        +--------+---------------------+--------+
+        | cmd_id | start channel index | length |
+        +--------+---------------------+--------+
+        | 3 bits | 5 bits              | 1 byte |
+        +--------+---------------------+--------+
 
     """
-
-    def __init__(self, start_channel_index, length):
-        self.cmd_id = CMD_GET_BULK
-        self.start_channel_index = start_channel_index
-        self.length = length
-
-    def __str__(self):
-        return "get {} channels from ch{}".format(self.length,
-                                                  self.start_channel_index)
-
-    def __repr__(self):
-        return "<GetBulkPacket(start_channel_index={},length={})>".format(
-            self.start_channel_index,
-            self.length)
-
-    def to_bytes(self):
-        self.cmd_id &= 0b111
-        self.start_channel_index &= 0b111
-        self.length &= 0xff
-        return struct.pack('BB',
-                           self.cmd_id << 5 | self.start_channel_index << 2,
-                           self.length)
+    return struct.pack('BB',
+                       (CMD_GET_BULK << 5 | packet.channel & 0x1f),
+                       packet.length)
 
 
-class SetBulkPacket(object):
+def setbulkpacket_to_bytes(packet):
     """SET BULK packet for setting multiple adjacent channel values in
-    one go. Just provide this class with the values and the length
-    will be inferred.
+    one go.
 
-    Example:
-
-        # creates a packet which sets channels 1, 2, 3 to 7, 8 and 9
-        packet = SetBulkPacket(1, bytes(7, 8, 9))
-
-    Structure:
-
-        +--------+-----------------+---------+----------+-----+------------+
-        | cmd_id | start ch. index | OR mask | AND mask | len | values     |
-        +--------+-----------------+---------+----------+-----+------------+
-        | 3 bits | 3 bits          | 1 bit   | 1 bit    | 1B  | 1+ byte(s) |
-        +--------+-----------------+---------+----------+-----+------------+
+        +--------+-----------------+-----+------------+
+        | cmd_id | start ch. index | len | values     |
+        +--------+-----------------+-----+------------+
+        | 3 bits | 5 bits          | 1B  | 1+ byte(s) |
+        +--------+-----------------+-----+------------+
 
     """
-
-    def __init__(self,
-                 start_channel_index,
-                 values,
-                 or_mask=False,
-                 and_mask=False):
-        self.cmd_id = CMD_SET_BULK
-        self.start_channel_index = start_channel_index
-        self.length = len(values)
-        self.values = values
-        self.or_mask = int(or_mask)
-        self.and_mask = int(and_mask)
-
-    def __str__(self):
-        return "set {} channels from ch{} to {}".format(
-            self.length, self.start_channel_index, self.values)
-
-    def __repr__(self):
-        s = "<SetBulkPacket(start_channel_index={},length={},values={})>"
-        return s.format(self.start_channel_index, self.length, self.values)
-
-    def to_bytes(self):
-        self.cmd_id &= 0b111
-        self.start_channel_index &= 0b111
-        self.length &= 0xff
-        self.or_mask &= 0x1
-        self.and_mask &= 0x1
-        return struct.pack('BB',
-                           (self.cmd_id << 5 |
-                            self.start_channel_index << 2 |
-                            self.or_mask << 1 |
-                            self.and_mask),
-                           self.length) + bytes(self.values)
+    return struct.pack('BB',
+                       (CMD_SET_BULK << 5 | packet.channel & 0x1f),
+                       len(packet.values)) + bytes(packet.values)
 
 
-# class ReadPacket(object):
-#     """READ packet for reading large chunks of memory.
+def andpacket_to_bytes(packet):
+    """Returns AndPacket as bytes.
 
-#     Structure:
+    AND packet for ANDing channel values.
 
-#         +--------+--------+---------------+--------+
-#         | cmd_id | unused | start address | length |
-#         +--------+--------+---------------+--------+
-#         | 3 bits | 5 bits | 1 byte        | 1 byte |
-#         +--------+--------+---------------+--------+
+        +--------+---------------+-----------+
+        | cmd_id | channel index | AND mask  |
+        +--------+---------------+-----------+
+        | 3 bits | 5 bits        | 1 byte    |
+        +--------+---------------+-----------+
 
-#     """
-
-#     def __init__(self, start_address, length):
-#         self.cmd_id = CMD_READ
-#         self.start_address = start_address
-#         self.length = length
-
-#     def __str__(self):
-#         return "read {} bytes from {}".format(self.length, self.start_address)
-
-#     def __repr__(self):
-#         s = "<ReadPacket(start_address={},length={})>"
-#         return s.format(self.start_address, self.length)
-
-#     def to_bytes(self):
-#         return struct.pack('BBB',
-#                            self.cmd_id << 5,
-#                            self.start_address,
-#                            self.length)
+    """
+    return struct.pack('BB',
+                       (CMD_AND << 5 | packet.channel & 0x1f),
+                       packet.mask)
 
 
-# class WritePacket(object):
-#     """WRITE packet for writing large chunks of memory. Payload is in bytes.
+def orpacket_to_bytes(packet):
+    """Returns OrPacket as bytes.
 
-#     Structure:
+    OR packet for ORing channel values.
 
-#         +--------+--------+---------------+--------+------------+
-#         | cmd_id | unused | start address | length | payload    |
-#         +--------+--------+---------------+--------+------------+
-#         | 3 bits | 5 bits | 1 byte        | 1 byte | 1+ byte(s) |
-#         +--------+--------+---------------+--------+------------+
+        +--------+---------------+----------+
+        | cmd_id | channel index | OR mask  |
+        +--------+---------------+----------+
+        | 3 bits | 5 bits        | 1 byte   |
+        +--------+---------------+----------+
 
-#     """
+    """
+    return struct.pack('BB',
+                       (CMD_OR << 5 | packet.channel & 0x1f),
+                       packet.mask)
 
-#     def __init__(self, start_address, payload):
-#         self.cmd_id = CMD_WRITE
-#         self.start_address = start_address
-#         self.length = len(payload)
-#         self.payload = payload
 
-#     def __str__(self):
-#         return "write {} bytes to {}".format(self.length,
-#                                              self.start_address)
+def andbulkpacket_to_bytes(packet):
+    """AND BULK packet for ANDing multiple adjacent channel values in
+    one go.
 
-#     def __repr__(self):
-#         s = "<WritePacket(start_address={},length={},values={})>"
-#         return s.format(self.start_address, self.length, self.values)
+        +--------+-----------------+-----+------------+
+        | cmd_id | start ch. index | len | values     |
+        +--------+-----------------+-----+------------+
+        | 3 bits | 5 bits          | 1B  | 1+ byte(s) |
+        +--------+-----------------+-----+------------+
 
-#     def to_bytes(self):
-#         self.cmd_id &= 0b111
-#         self.start_address &= 0xff
-#         self.length &= 0xff
-#         return struct.pack('BBB',
-#                            self.cmd_id << 5,
-#                            self.start_address,
-#                            self.length) + self.payload
+    """
+    return struct.pack('BB',
+                       (CMD_AND_BULK << 5 | packet.channel & 0x1f),
+                       len(packet.masks)) + bytes(packet.masks)
+
+
+def orbulkpacket_to_bytes(packet):
+    """OR BULK packet for setting multiple adjacent channel values in
+    one go.
+
+        +--------+-----------------+-----+------------+
+        | cmd_id | start ch. index | len | values     |
+        +--------+-----------------+-----+------------+
+        | 3 bits | 5 bits          | 1B  | 1+ byte(s) |
+        +--------+-----------------+-----+------------+
+
+    """
+    return struct.pack('BB',
+                       (CMD_OR_BULK << 5 | packet.channel & 0x1f),
+                       len(packet.masks)) + bytes(packet.masks)
+
+
+# defined at module so dict is only created once
+P2B_FUNCTIONS = {GetPacket: getpacket_to_bytes,
+                 SetPacket: setpacket_to_bytes,
+                 GetBulkPacket: getbulkpacket_to_bytes,
+                 SetBulkPacket: setbulkpacket_to_bytes,
+                 AndPacket: andpacket_to_bytes,
+                 OrPacket: orpacket_to_bytes,
+                 AndBulkPacket: andbulkpacket_to_bytes,
+                 SetBulkPacket: orbulkpacket_to_bytes}
+
+
+def packet_to_bytes(packet):
+    """Returns packet as bytes."""
+    return P2B_FUNCTIONS[type(packet)](packet)

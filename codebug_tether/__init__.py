@@ -1,1 +1,1 @@
-from codebug_tether.core import (CodeBugRaw, CodeBug)
+from codebug_tether.core import CodeBug
