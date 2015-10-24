@@ -17,10 +17,11 @@ from codebug_tether.char_map import (char_map, StringSprite)
 
 DEFAULT_SERIAL_PORT = '/dev/ttyACM0'
 OUTPUT_CHANNEL_INDEX = 5
-INPUT_CHANNEL_INDEX = 6
-IO_DIRECTION_CHANNEL = 7
+LEG_INPUT_CHANNEL_INDEX = 6
+BUTTON_INPUT_CHANNEL_INDEX = 7
+IO_DIRECTION_CHANNEL = 8
 # Pullups for Port B (Register: WPUB)
-PULLUP_CHANNEL_INDEX = 8
+PULLUP_CHANNEL_INDEX = 9
 
 
 class SerialChannelDevice():
@@ -53,6 +54,17 @@ class SerialChannelDevice():
     def or_mask_bulk(self, start_index, masks):
         self.tx_rx_packet(OrBulkPacket(start_index, masks))
 
+    def set_channel_bit(self, channel_index, bit_index, state):
+        """Sets a bit in a channel to state."""
+        if state:
+            self.or_mask(channel_index, 1 << bit_index)
+        else:
+            self.and_mask(channel_index, 0xff ^ (1 << bit_index))
+
+    def get_channel_bit(self, channel_index, bit_index):
+        """Returns a bit from a channel."""
+        return (self.get(channel_index) >> bit_index) & 0x1
+
     def tx_rx_packet(self, packet):
         """Sends a packet and waits for a response."""
         # Send the packet
@@ -80,9 +92,9 @@ class CodeBug(SerialChannelDevice):
 
     def _int_input_index(self, input_index):
         """Returns an integer input index."""
-        # 'A' is 4, 'B' is 5
+        # 'A' is 8, 'B' is 9
         if isinstance(input_index, str):
-            input_index = 4 if 'a' in input_index.lower() else 5
+            input_index = 8 if 'a' in input_index.lower() else 9
         return input_index
 
     def get_input(self, input_index):
@@ -92,12 +104,19 @@ class CodeBug(SerialChannelDevice):
             >>> codebug = CodeBug()
             >>> codebug.get_input('A')  # switch A is pressed
             1
-            >>> codebug.get_input(0)  # assuming pad 0 is connected to GND
+            >>> codebug.get_input(0)  # assuming leg 0 is connected to GND
+            0
+            >>> codebug.get_input(4)  # extension I/O pin 4 is connected to GND
             0
 
         """
         input_index = self._int_input_index(input_index)
-        return (self.get(INPUT_CHANNEL_INDEX) >> input_index) & 0x1
+        if input_index > 7:
+            channel_index = BUTTON_INPUT_CHANNEL_INDEX
+            input_index -= 8
+        else:
+            channel_index = LEG_INPUT_CHANNEL_INDEX
+        return self.get_channel_bit(channel_index, input_index)
 
     def set_pullup(self, input_index, state):
         """Sets the state of the input pullups. Turn off to enable touch
@@ -108,23 +127,20 @@ class CodeBug(SerialChannelDevice):
             >>> codebug.set_pullup(2, 0)  # input pad 2 <22M OHMS touch sensitive
 
         """
-        state = 1 if state else 0
         input_index = self._int_input_index(input_index)
-        self.set(PULLUP_CHANNEL_INDEX, state << input_index, or_mask=True)
+        self.set_channel_bit(PULLUP_CHANNEL_INDEX, input_index, direction)
 
     def set_output(self, output_index, state):
-        """Sets the output index to state (CodeBug only have outputs 1 and 3)
-        """
-        state = 1 if state else 0
-        state <<= output_index
-        # print(bin(state))
-        self.set(OUTPUT_CHANNEL_INDEX, state, or_mask=True)
+        """Sets the output index to state."""
+        self.set_channel_bit(OUTPUT_CHANNEL_INDEX, output_index, state)
+
+    def get_output(self, output_index):
+        """Returns the state of the output at index."""
+        return self.get_channel_bit(OUTPUT_CHANNEL_INDEX, output_index)
 
     def set_leg_io(self, leg_index, direction):
         """Sets the I/O direction of the leg at index."""
-        # io_config_state = leg_index in upper nibble and state in lower nibble
-        io_config_state = ((leg_index << 4) & 0xf0) | (direction & 0x0f)
-        self.set(IO_DIRECTION_CHANNEL, io_config_state)
+        self.set_channel_bit(IO_DIRECTION_CHANNEL, leg_index, direction)
 
     def clear(self):
         """Clears the pixels on CodeBug.
@@ -133,8 +149,7 @@ class CodeBug(SerialChannelDevice):
             >>> codebug.clear()
 
         """
-        for row in range(5):
-            self.set_row(row, 0)
+        self.set_bulk(0, [0]*5)
 
     def set_row(self, row, val):
         """Sets a row of PIXELs on CodeBug.
@@ -153,7 +168,7 @@ class CodeBug(SerialChannelDevice):
             21
 
         """
-        return self.get(row)
+        return self.get(min(row, 5))  # only row channels
 
     def set_col(self, col, val):
         """Sets an entire column of PIXELs on CodeBug.
@@ -162,16 +177,13 @@ class CodeBug(SerialChannelDevice):
             >>> codebug.set_col(0, 0b10101)
 
         """
-        # TODO add and_mask into set packet
-        for row in range(5):
-            state = (val >> (4 - row)) & 0x1  # state of column 1/0
-            mask = 1 << (4 - col)  # bit mask to apply to row
-            if state > 0:
-                self.set(row, mask, or_mask=True)  # OR row with mask
-            else:
-                # TODO and_mask here
-                mask ^= 0x1f
-                self.set(row, self.get(row) & mask)  # AND row with mask
+        rows = self.get_bulk(0, 5)
+        # clear col
+        rows = [rows[i] & (0xff ^ (1 << (4-col))) for i in range(5)]
+        # set cols
+        val_bits = [(val >> i) & 1 for i in reversed(range(5))]
+        rows = [rows[i] | (bit << (4-col)) for i, bit in enumerate(val_bits)]
+        self.set_bulk(0, rows)
 
     def get_col(self, col):
         """Returns an entire column of PIXELs on CodeBug.
@@ -181,9 +193,12 @@ class CodeBug(SerialChannelDevice):
             21
 
         """
+        rows = self.get_bulk(0, 5)
         c = 0
-        for row in range(5):
-            c |= (self.get_row(row) >> (4 - col)) << (4-row)
+        for row in rows:
+            c <<= 1
+            col_bit = 1 & (row >> (4 - col))
+            c |= col_bit
         return c
 
     def set_pixel(self, x, y, state):
@@ -193,13 +208,9 @@ class CodeBug(SerialChannelDevice):
             >>> codebug.set_pixel(0, 0, 1)
 
         """
-        mask = 1 << (4 - x)  # bit mask to apply to row
-        if state > 0:
-            self.set(y, mask, or_mask=True)  # OR row with mask
-        else:
-            # TODO and_mask here
-            mask ^= 0x1f
-            self.set(y, self.get(y) & mask)  # AND row with mask
+        channel = min(y, 5)  # only row channels
+        bit_index = 4 - x
+        self.set_channel_bit(channel, bit_index, state)
 
     def get_pixel(self, x, y):
         """Returns the state of an PIXEL on CodeBug.
@@ -209,21 +220,27 @@ class CodeBug(SerialChannelDevice):
             1
 
         """
-        return (self.get(y) >> (4 - x)) & 0x1
+        return (self.get(min(y, 5)) >> (4 - x)) & 0x1
 
-    def write_text(self, x, y, message, direction="right"):
+    def write_text(self, x, y, message, direction="right", clear_first=True):
         """Writes some text on CodeBug at PIXEL (x, y).
 
             >>> codebug = CodeBug()
             >>> codebug.write_text(0, 0, 'Hello, CodeBug!')
 
         """
+        rows = [0] * 5
         s = StringSprite(message, direction)
-        self.clear()
+
         for row_i, row in enumerate(s.pixel_state):
             if (row_i - y) >= 0 and (row_i - y) <= 4:
                 code_bug_pixel_row = 0
                 for col_i, state in enumerate(row):
                     if col_i + x >= 0 and col_i + x <= 4:
                         code_bug_pixel_row |= state << 4 - (col_i + x)
-                self.set(4-row_i+y, code_bug_pixel_row)
+                rows[4-row_i+y] = code_bug_pixel_row
+
+        if clear_first:
+            self.set_bulk(0, rows)
+        else:
+            self.or_mask_bulk(0, rows)

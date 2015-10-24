@@ -6,111 +6,140 @@
 import time
 import serial
 import unittest
-from codebug_tether.core import (CodeBug, SerialChannelDevice)
+from codebug_tether.core import (CodeBug,
+                                 IO_DIRECTION_CHANNEL)
 from codebug_tether.char_map import (CharSprite, StringSprite)
-
-
-class TestCodeBugGet(unittest.TestCase):
-
-    def setUp(self):
-        self.codebug = SerialChannelDevice(serial.Serial())
-        self.num_channels = 5
-
-    def test_set_get(self):
-        for i in range(self.num_channels):
-            self.codebug.set(i, (i*i) % 0x1F)
-
-        for i in range(self.num_channels):
-            self.assertEqual(self.codebug.get(i), (i*i) % 0x1F)
-
-
-class TestSerialChannelDeviceObject(unittest.TestCase):
-
-    def setUp(self):
-        self.codebug = SerialChannelDevice(serial.Serial('/dev/ttyACM0'))
-        # self.codebug = SerialChannelDevice(serial.Serial('/dev/pts/4'))
-        self.num_channels = 5
-
-    # @unittest.skip
-    def test_channels_get_set(self):
-        """
-            >>> codebug.set(1, 2)
-            >>> codebug.get(1)
-            2
-        """
-        for i in range(self.num_channels):
-            self.codebug.set(i, (i*i) % 0x1F)
-
-        for i in range(self.num_channels):
-            self.assertEqual(self.codebug.get(i), (i*i) % 0x1F)
-
-        # with or_mask
-        for i in range(self.num_channels):
-            self.codebug.set(i, 0x10, or_mask=True)
-
-        for i in range(self.num_channels):
-            self.assertEqual(self.codebug.get(i), (0x10 | (i*i)) % 0x1F)
-
-    # @unittest.skip
-    def test_channel_get_set_bulk(self):
-        """
-            >>> codebug.set_bulk(0, [1, 2, 3])
-            >>> codebug.channels[1].value
-            2
-        """
-        v = list(range(self.num_channels))
-        self.codebug.set_bulk(0, v)
-        self.assertEqual(tuple(self.codebug.get_bulk(0, len(v))),
-                         tuple(v))
-
-        v[2] = 0b11011
-        v[3] = 0b01001
-        self.codebug.set_bulk(2, v[2:4])
-        self.assertEqual(tuple(self.codebug.get_bulk(0, self.num_channels)),
-                         tuple(v))
-
-        v = list(range(self.num_channels))
-        self.codebug.set_bulk(0, v)
-        self.assertEqual(tuple(self.codebug.get_bulk(0, len(v))),
-                         tuple(v))
-
-        v[2] |= 0b10001
-        v[3] |= 0b01001
-        self.codebug.set_bulk(2, v[2:4], or_mask=True)
-        self.assertEqual(tuple(self.codebug.get_bulk(0, self.num_channels)),
-                         tuple(v))
-
-    def test_channel_get_set_bulk(self):
-        x = self.codebug.get(5)
-        a = (x >> 4) & 0x1
-        b = (x >> 5) & 0x1
-        print("A is {}, B is {}".format(a, b))
 
 
 class TestCodeBug(unittest.TestCase):
 
     def setUp(self):
         self.codebug = CodeBug()
-        self.num_channels = 5
 
-    def test_write_text(self):
-        msg = "Hello, CodeBug!"
-        delay = 0.025
-        for i in range(len(msg) * 5 + 5):
-            self.codebug.write_text(5 - i, 0, msg)
-            time.sleep(delay)
+    def test_get_input(self):
+        # configure as inputs
+        for i in range(7):
+            self.codebug.set_leg_io(i, 1)
+        # and just print them
+        for i in ['A', 'B'] + list(range(8)):
+            print("Input {} is {}".format(i, self.codebug.get_input(i)))
 
-        for i in range(len(msg) * 6 + 6):
-            self.codebug.write_text(0, i - 5, msg, direction="down")
-            time.sleep(delay)
+    def test_set_output(self):
+        num_outputs = 8
+        for i in range(num_outputs):
+            self.codebug.set_leg_io(i, 0)  # set to output
+            self.codebug.set_output(i, 1)  # set to ON
 
-        for i in range(len(msg) * 5 + 5):
-            self.codebug.write_text(0 - i, 0, msg, direction="left")
-            time.sleep(delay)
+        # check that they are all on
+        for i in range(num_outputs):
+            self.assertEqual(self.codebug.get_output(i), 1)
 
-        for i in range(len(msg) * 6 + 6):
-            self.codebug.write_text(0, i - 5, msg, direction="up")
-            time.sleep(delay)
+        # then turn off again
+        for i in range(num_outputs):
+            self.codebug.set_output(i, 0)  # set to OFF
+
+    def test_set_leg_io(self):
+        self.codebug.set_leg_io(0, 0)
+        self.codebug.set_leg_io(1, 1)
+        self.codebug.set_leg_io(2, 0)
+        self.codebug.set_leg_io(3, 1)
+        self.codebug.set_leg_io(4, 0)
+        self.codebug.set_leg_io(5, 1)
+        self.codebug.set_leg_io(6, 0)
+        self.codebug.set_leg_io(7, 1)
+        self.assertEqual(self.codebug.get(IO_DIRECTION_CHANNEL), 0xAA)
+
+        self.codebug.set_leg_io(0, 1)
+        self.codebug.set_leg_io(1, 0)
+        self.codebug.set_leg_io(2, 1)
+        self.codebug.set_leg_io(3, 0)
+        self.codebug.set_leg_io(4, 1)
+        self.codebug.set_leg_io(5, 0)
+        self.codebug.set_leg_io(6, 1)
+        self.codebug.set_leg_io(7, 0)
+        self.assertEqual(self.codebug.get(IO_DIRECTION_CHANNEL), 0x55)
+
+        # safely back to inputs
+        for i in range(7):
+            self.codebug.set_leg_io(i, 1)
+
+    def test_clear(self):
+        self.codebug.clear()
+        rows = self.codebug.get_bulk(0, 5)
+        self.assertEqual(rows, (0,)*5)
+
+    def test_set_row(self):
+        for test_value in (0x0A, 0x15):
+            for i in range(5):
+                self.codebug.set_row(i, test_value)
+            rows = self.codebug.get_bulk(0, 5)
+            self.assertEqual(rows, (test_value,)*5)
+        self.codebug.clear()
+
+    def test_get_row(self):
+        for test_value in (0x0A, 0x15):
+            self.codebug.set_bulk(0, (test_value,)*5)
+            for i in range(5):
+                self.assertEqual(self.codebug.get_row(i), test_value)
+        self.codebug.clear()
+
+    def test_set_col(self):
+        for i in range(5):
+            self.codebug.set_col(i, 0x0A)
+        rows = self.codebug.get_bulk(0, 5)
+        self.assertEqual(rows, (0x00, 0x1F, 0x00, 0x1F, 0x00))
+        self.codebug.clear()
+
+        for i in range(5):
+            self.codebug.set_col(i, 0x15)
+        rows = self.codebug.get_bulk(0, 5)
+        self.assertEqual(rows, (0x1F, 0x00, 0x1F, 0x00, 0x1F))
+        self.codebug.clear()
+
+    def test_get_col(self):
+        self.codebug.set_bulk(0, (0x00, 0x1F, 0x00, 0x1F, 0x00))
+        for i in range(5):
+            self.assertEqual(self.codebug.get_col(i), 0x0A)
+        self.codebug.clear()
+        self.codebug.set_bulk(0, (0x1F, 0x00, 0x1F, 0x00, 0x1F))
+        for i in range(5):
+            self.assertEqual(self.codebug.get_col(i), 0x15)
+        self.codebug.clear()
+
+    def test_set_pixel(self):
+        self.codebug.clear()
+        for y in range(5):
+            for x in range(5):
+                self.codebug.set_pixel(x, y, 1)
+                self.assertEqual(self.codebug.get(y), 1 << (4-x))
+                self.codebug.set_pixel(x, y, 0)
+
+    def test_get_pixel(self):
+        self.codebug.clear()
+        for y in range(5):
+            for x in range(5):
+                for i in range(2):
+                    self.codebug.set_pixel(x, y, i)
+                    self.assertEqual(self.codebug.get_pixel(x, y), i)
+
+    # def test_write_text(self):
+    #     msg = "Hello, CodeBug!"
+    #     delay = 0.025
+    #     for i in range(len(msg) * 5 + 5):
+    #         self.codebug.write_text(5 - i, 0, msg)
+    #         time.sleep(delay)
+
+    #     for i in range(len(msg) * 6 + 6):
+    #         self.codebug.write_text(0, i - 5, msg, direction="down")
+    #         time.sleep(delay)
+
+    #     for i in range(len(msg) * 5 + 5):
+    #         self.codebug.write_text(0 - i, 0, msg, direction="left")
+    #         time.sleep(delay)
+
+    #     for i in range(len(msg) * 6 + 6):
+    #         self.codebug.write_text(0, i - 5, msg, direction="up")
+    #         time.sleep(delay)
 
 
 class TestSprites(unittest.TestCase):
@@ -123,18 +152,18 @@ class TestSprites(unittest.TestCase):
                     [1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0],
                     [1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0],
                     [1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0]]
-        self.assertEqual(s.led_state, expected)
+        self.assertEqual(s.pixel_state, expected)
 
 
-class TestCodeBugInput(unittest.TestCase):
+# class TestCodeBugInput(unittest.TestCase):
 
-    def setUp(self):
-        self.codebug = CodeBug('/dev/ttyACM0')
-        # self.codebug.set_pullup(0, 0)
-        # self.codebug.set_pullup(2, 0)
+#     def setUp(self):
+#         self.codebug = CodeBug('/dev/ttyACM0')
+#         # self.codebug.set_pullup(0, 0)
+#         # self.codebug.set_pullup(2, 0)
 
-    def test_get_input_channel(self):
-        print(bin(self.codebug.get(5)))
+#     def test_get_input_channel(self):
+#         print(bin(self.codebug.get(5)))
 
 
 if __name__ == "__main__":

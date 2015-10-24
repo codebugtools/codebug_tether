@@ -176,7 +176,7 @@ P2B_FUNCTIONS = {GetPacket: getpacket_to_bytes,
                  AndPacket: andpacket_to_bytes,
                  OrPacket: orpacket_to_bytes,
                  AndBulkPacket: andbulkpacket_to_bytes,
-                 SetBulkPacket: orbulkpacket_to_bytes}
+                 OrBulkPacket: orbulkpacket_to_bytes}
 
 
 def packet_to_bytes(packet):
