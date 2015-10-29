@@ -108,6 +108,16 @@ class CodeBug(CodeBugRaw):
         """
         for row in range(5):
             self.set_row(row, 0)
+            
+    def fill(self):
+        """Sets all pixels on.
+
+            >>> codebug = CodeBug()
+            >>> codebug.fill()
+
+        """
+        for row in range(5):
+            self.set_row(row, 0b11111)            
 
     def set_row(self, row, val):
         """Sets a row of PIXELs on CodeBug.
