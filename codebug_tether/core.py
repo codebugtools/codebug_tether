@@ -2,16 +2,7 @@ import os
 import time
 import serial
 import struct
-from codebug_tether.packets import (packet_to_bytes,
-                                    ACK_BYTE,
-                                    GetPacket,
-                                    SetPacket,
-                                    GetBulkPacket,
-                                    SetBulkPacket,
-                                    AndPacket,
-                                    OrPacket,
-                                    AndBulkPacket,
-                                    OrBulkPacket)
+from codebug_tether.packets import SerialChannelDevice
 from codebug_tether.char_map import (char_map, StringSprite)
 
 
@@ -22,65 +13,6 @@ BUTTON_INPUT_CHANNEL_INDEX = 7
 IO_DIRECTION_CHANNEL = 8
 # Pullups for Port B (Register: WPUB)
 PULLUP_CHANNEL_INDEX = 9
-
-
-class SerialChannelDevice():
-    """A serial device with channels to GET/SET."""
-
-    def __init__(self, serial_port):
-        self.serial_port = serial_port
-
-    def get(self, index):
-        return self.tx_rx_packet(GetPacket(channel=index))
-
-    def set(self, index, value):
-        self.tx_rx_packet(SetPacket(index, value))
-
-    def get_bulk(self, start_index, length):
-        return self.tx_rx_packet(GetBulkPacket(start_index, length))
-
-    def set_bulk(self, start_index, values):
-        self.tx_rx_packet(SetBulkPacket(start_index, values))
-
-    def and_mask(self, index, mask):
-        self.tx_rx_packet(AndPacket(index, mask))
-
-    def or_mask(self, index, mask):
-        self.tx_rx_packet(OrPacket(index, mask))
-
-    def and_mask_bulk(self, start_index, masks):
-        self.tx_rx_packet(AndBulkPacket(start_index, masks))
-
-    def or_mask_bulk(self, start_index, masks):
-        self.tx_rx_packet(OrBulkPacket(start_index, masks))
-
-    def set_channel_bit(self, channel_index, bit_index, state):
-        """Sets a bit in a channel to state."""
-        if state:
-            self.or_mask(channel_index, 1 << bit_index)
-        else:
-            self.and_mask(channel_index, 0xff ^ (1 << bit_index))
-
-    def get_channel_bit(self, channel_index, bit_index):
-        """Returns a bit from a channel."""
-        return (self.get(channel_index) >> bit_index) & 0x1
-
-    def tx_rx_packet(self, packet):
-        """Sends a packet and waits for a response."""
-        # Send the packet
-        self.serial_port.write(packet_to_bytes(packet))
-
-        # CodeBug will always return an ACK byte
-        assert self.serial_port.read(1)[0] == ACK_BYTE
-
-        # GET commands will now have extra data returned
-        if type(packet) == GetPacket:
-            # just read 1 byte
-            return struct.unpack('B', self.serial_port.read(1))[0]
-
-        elif type(packet) == GetBulkPacket:
-            return struct.unpack('B'*packet.length,
-                                 self.serial_port.read(packet.length))
 
 
 class CodeBug(SerialChannelDevice):
