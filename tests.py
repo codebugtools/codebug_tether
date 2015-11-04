@@ -122,6 +122,16 @@ class TestCodeBug(unittest.TestCase):
                     self.codebug.set_pixel(x, y, i)
                     self.assertEqual(self.codebug.get_pixel(x, y), i)
 
+    def test_get_set_buffer(self):
+        # self.codebug.set_row(0, 0xaa)
+        # self.codebug.set_row(0, 0x00)
+        self.codebug.set_buffer(0, list(range(70)))
+        print("get buffer 0, 50")
+        print(self.codebug.get_buffer(0, 50))
+        print("get buffer 0, 50, 49")
+        print(self.codebug.get_buffer(0, 50, 49))
+        # self.assertEqual(self.codebug.get_pixel(x, y), i)
+
     # def test_write_text(self):
     #     msg = "Hello, CodeBug!"
     #     delay = 0.025

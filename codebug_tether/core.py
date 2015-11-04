@@ -2,7 +2,7 @@ import os
 import time
 import serial
 import struct
-from codebug_tether.packets import SerialChannelDevice
+from codebug_tether.serial_channel_device import SerialChannelDevice
 from codebug_tether.char_map import (char_map, StringSprite)
 
 
