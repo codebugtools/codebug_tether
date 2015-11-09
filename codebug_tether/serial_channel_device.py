@@ -4,7 +4,7 @@ Useful for interacting with serial devices which use channels.
 import struct
 
 
-ACK_BYTE = 0xCB
+ACK_BYTE = bytes((0xCB,))
 
 CMD_GET = 0
 CMD_SET = 1
@@ -197,4 +197,4 @@ class SerialChannelDevice():
         self.serial_port.write(tx_bytes)
 
         # CodeBug will always return an ACK byte
-        assert self.serial_port.read(1)[0] == ACK_BYTE
+        assert self.serial_port.read(1) == ACK_BYTE
