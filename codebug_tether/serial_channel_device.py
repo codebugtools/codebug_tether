@@ -146,11 +146,22 @@ class SerialChannelDevice():
                         (CMD_OR << 5 | channel_index & 0x1f),
                         mask))
 
+    def set_bit(self, channel_index, bit_index, state):
+        """Sets a bit in a channel to state."""
+        if state:
+            self.or_mask(channel_index, 1 << bit_index)
+        else:
+            self.and_mask(channel_index, 0xff ^ (1 << bit_index))
+
+    def get_bit(self, channel_index, bit_index):
+        """Returns a bit from a channel."""
+        return (self.get(channel_index) >> bit_index) & 0x1
+
     def get_buffer(self, buffer_index, length, offset=0):
         """GET BUFFER packet for reading whole buffers.
 
             +--------+--------------+--------+--------+
-            | cmd id | buffer index | length | offset |
+            | cmd id | buffer index | offset | length |
             +--------+--------------+--------+--------+
             | 3 bits | 5 bits       | 1 byte | 1 byte |
             +--------+--------------+--------+--------+
@@ -159,8 +170,8 @@ class SerialChannelDevice():
         self.transaction(
             struct.pack('BBB',
                         (CMD_GET_BUFFER << 5 | buffer_index & 0x1f),
-                        length,
-                        offset))
+                        offset,
+                        length))
         # Serial port will now contain buffer data
         return struct.unpack('B'*length, self.serial_port.read(length))
 
@@ -168,7 +179,7 @@ class SerialChannelDevice():
         """SET BUFFER packet for setting whole buffers.
 
             +--------+--------------+--------+--------+------------+
-            | cmd id | buffer index | length | offset | values     |
+            | cmd id | buffer index | offset | length | values     |
             +--------+--------------+--------+--------+------------+
             | 3 bits | 5 bits       | 1 byte | 1 byte | 1+ byte(s) |
             +--------+--------------+--------+--------+------------+
@@ -177,19 +188,8 @@ class SerialChannelDevice():
         self.transaction(
             struct.pack('BBB',
                         (CMD_SET_BUFFER << 5 | buffer_index & 0x1f),
-                        len(values),
-                        offset) + bytes(values))
-
-    def set_channel_bit(self, channel_index, bit_index, state):
-        """Sets a bit in a channel to state."""
-        if state:
-            self.or_mask(channel_index, 1 << bit_index)
-        else:
-            self.and_mask(channel_index, 0xff ^ (1 << bit_index))
-
-    def get_channel_bit(self, channel_index, bit_index):
-        """Returns a bit from a channel."""
-        return (self.get(channel_index) >> bit_index) & 0x1
+                        offset,
+                        len(values)) + bytes(values))
 
     def transaction(self, tx_bytes):
         """Sends a packet and waits for a ACK response."""

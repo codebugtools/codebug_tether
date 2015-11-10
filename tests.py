@@ -123,14 +123,15 @@ class TestCodeBug(unittest.TestCase):
                     self.assertEqual(self.codebug.get_pixel(x, y), i)
 
     def test_get_set_buffer(self):
-        # self.codebug.set_row(0, 0xaa)
-        # self.codebug.set_row(0, 0x00)
-        self.codebug.set_buffer(0, list(range(70)))
-        print("get buffer 0, 50")
-        print(self.codebug.get_buffer(0, 50))
-        print("get buffer 0, 50, 49")
-        print(self.codebug.get_buffer(0, 50, 49))
-        # self.assertEqual(self.codebug.get_pixel(x, y), i)
+        v = tuple(range(255))
+        self.codebug.set_buffer(0, v)
+        self.assertEqual(self.codebug.get_buffer(0, len(v)), v)
+        v = tuple(range(100))
+        self.codebug.set_buffer(0, v, 100)
+        self.assertEqual(self.codebug.get_buffer(0, 255),
+                         tuple(range(100))+tuple(range(100))+tuple(range(100+100, 255)))
+        self.assertEqual(self.codebug.get_buffer(0, 101, 100),
+                         tuple(range(100))+(range(255)[200],))
 
     # def test_write_text(self):
     #     msg = "Hello, CodeBug!"
@@ -163,17 +164,6 @@ class TestSprites(unittest.TestCase):
                     [1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0],
                     [1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 0, 0]]
         self.assertEqual(s.pixel_state, expected)
-
-
-# class TestCodeBugInput(unittest.TestCase):
-
-#     def setUp(self):
-#         self.codebug = CodeBug('/dev/ttyACM0')
-#         # self.codebug.set_pullup(0, 0)
-#         # self.codebug.set_pullup(2, 0)
-
-#     def test_get_input_channel(self):
-#         print(bin(self.codebug.get(5)))
 
 
 if __name__ == "__main__":

@@ -48,7 +48,7 @@ class CodeBug(SerialChannelDevice):
             input_index -= 8
         else:
             channel_index = LEG_INPUT_CHANNEL_INDEX
-        return self.get_channel_bit(channel_index, input_index)
+        return self.get_bit(channel_index, input_index)
 
     def set_pullup(self, input_index, state):
         """Sets the state of the input pullups. Turn off to enable touch
@@ -60,19 +60,19 @@ class CodeBug(SerialChannelDevice):
 
         """
         input_index = self._int_input_index(input_index)
-        self.set_channel_bit(PULLUP_CHANNEL_INDEX, input_index, direction)
+        self.set_bit(PULLUP_CHANNEL_INDEX, input_index, direction)
 
     def set_output(self, output_index, state):
         """Sets the output index to state."""
-        self.set_channel_bit(OUTPUT_CHANNEL_INDEX, output_index, state)
+        self.set_bit(OUTPUT_CHANNEL_INDEX, output_index, state)
 
     def get_output(self, output_index):
         """Returns the state of the output at index."""
-        return self.get_channel_bit(OUTPUT_CHANNEL_INDEX, output_index)
+        return self.get_bit(OUTPUT_CHANNEL_INDEX, output_index)
 
     def set_leg_io(self, leg_index, direction):
         """Sets the I/O direction of the leg at index."""
-        self.set_channel_bit(IO_DIRECTION_CHANNEL, leg_index, direction)
+        self.set_bit(IO_DIRECTION_CHANNEL, leg_index, direction)
 
     def clear(self):
         """Clears the pixels on CodeBug.
@@ -142,7 +142,7 @@ class CodeBug(SerialChannelDevice):
         """
         channel = min(y, 5)  # only row channels
         bit_index = 4 - x
-        self.set_channel_bit(channel, bit_index, state)
+        self.set_bit(channel, bit_index, state)
 
     def get_pixel(self, x, y):
         """Returns the state of an PIXEL on CodeBug.
