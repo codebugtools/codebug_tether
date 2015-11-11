@@ -17,7 +17,7 @@ CMD_SET_BUFFER = 7
 
 
 class SerialChannelDevice():
-    """A serial device with single byte channels and several byte buffers.
+    """A serial device with single-byte channels and several-byte buffers.
 
     Channels can be GET/SET individually or in bulk.
 
@@ -33,7 +33,7 @@ class SerialChannelDevice():
     | |    ch0    |  |  buf0-0   |  buf0-1   |    ...    |  buf0-N   | |
     | +-----------+  +-----------+-----------+-----------+-----------+ |
     | |    ch1    |  +-----------+-----------+-----------+-----------+ |
-    | +-----------+  |  buf0-0   |  buf0-1   |    ...    |  buf0-N   | |
+    | +-----------+  |  buf1-0   |  buf1-1   |    ...    |  buf1-N   | |
     | |    ...    |  +-----------+-----------+-----------+-----------+ |
     | +-----------+                                                    |
     | |    chN    |                                                    |

@@ -7,7 +7,7 @@ import time
 import serial
 import unittest
 from codebug_tether.core import (CodeBug,
-                                 IO_DIRECTION_CHANNEL)
+                                 CHANNEL_INDEX_IO_DIRECTION)
 from codebug_tether.char_map import (CharSprite, StringSprite)
 
 
@@ -47,7 +47,7 @@ class TestCodeBug(unittest.TestCase):
         self.codebug.set_leg_io(5, 1)
         self.codebug.set_leg_io(6, 0)
         self.codebug.set_leg_io(7, 1)
-        self.assertEqual(self.codebug.get(IO_DIRECTION_CHANNEL), 0xAA)
+        self.assertEqual(self.codebug.get(CHANNEL_INDEX_IO_DIRECTION), 0xAA)
 
         self.codebug.set_leg_io(0, 1)
         self.codebug.set_leg_io(1, 0)
@@ -57,7 +57,7 @@ class TestCodeBug(unittest.TestCase):
         self.codebug.set_leg_io(5, 0)
         self.codebug.set_leg_io(6, 1)
         self.codebug.set_leg_io(7, 0)
-        self.assertEqual(self.codebug.get(IO_DIRECTION_CHANNEL), 0x55)
+        self.assertEqual(self.codebug.get(CHANNEL_INDEX_IO_DIRECTION), 0x55)
 
         # safely back to inputs
         for i in range(7):

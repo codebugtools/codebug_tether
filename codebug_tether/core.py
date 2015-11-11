@@ -7,17 +7,24 @@ from codebug_tether.char_map import (char_map, StringSprite)
 
 
 DEFAULT_SERIAL_PORT = '/dev/ttyACM0'
-OUTPUT_CHANNEL_INDEX = 5
-LEG_INPUT_CHANNEL_INDEX = 6
-BUTTON_INPUT_CHANNEL_INDEX = 7
-IO_DIRECTION_CHANNEL = 8
-# Pullups for Port B (Register: WPUB)
-PULLUP_CHANNEL_INDEX = 9
+
+CHANNEL_INDEX_OUTPUT = 5
+CHANNEL_INDEX_LEG_INPUT = 6
+CHANNEL_INDEX_BUTTON_INPUT = 7
+CHANNEL_INDEX_IO_DIRECTION = 8
+CHANNEL_INDEX_PULLUPS = 9
+CHANNEL_INDEX_EXT_CONF = 10
+CHANNEL_INDEX_SPI_RATE = 11
+CHANNEL_INDEX_SPI_LENGTH = 12
+CHANNEL_INDEX_SPI_CONTROL = 13
+
+EXTENSION_CONF_IO = 0
+EXTENSION_CONF_SPI = 1
+EXTENSION_CONF_I2C = 2
 
 
 class CodeBug(SerialChannelDevice):
     """Manipulates CodeBug over a USB serial connection."""
-    # Adds fancy, easy-to-use features to CodeBugRaw.
 
     def __init__(self, serial_port=DEFAULT_SERIAL_PORT):
         super(CodeBug, self).__init__(serial.Serial(serial_port, timeout=2))
@@ -44,10 +51,10 @@ class CodeBug(SerialChannelDevice):
         """
         input_index = self._int_input_index(input_index)
         if input_index > 7:
-            channel_index = BUTTON_INPUT_CHANNEL_INDEX
+            channel_index = CHANNEL_INDEX_BUTTON_INPUT
             input_index -= 8
         else:
-            channel_index = LEG_INPUT_CHANNEL_INDEX
+            channel_index = CHANNEL_INDEX_LEG_INPUT
         return self.get_bit(channel_index, input_index)
 
     def set_pullup(self, input_index, state):
@@ -60,19 +67,19 @@ class CodeBug(SerialChannelDevice):
 
         """
         input_index = self._int_input_index(input_index)
-        self.set_bit(PULLUP_CHANNEL_INDEX, input_index, direction)
+        self.set_bit(CHANNEL_INDEX_PULLUPS, input_index, direction)
 
     def set_output(self, output_index, state):
         """Sets the output index to state."""
-        self.set_bit(OUTPUT_CHANNEL_INDEX, output_index, state)
+        self.set_bit(CHANNEL_INDEX_OUTPUT, output_index, state)
 
     def get_output(self, output_index):
         """Returns the state of the output at index."""
-        return self.get_bit(OUTPUT_CHANNEL_INDEX, output_index)
+        return self.get_bit(CHANNEL_INDEX_OUTPUT, output_index)
 
     def set_leg_io(self, leg_index, direction):
         """Sets the I/O direction of the leg at index."""
-        self.set_bit(IO_DIRECTION_CHANNEL, leg_index, direction)
+        self.set_bit(CHANNEL_INDEX_IO_DIRECTION, leg_index, direction)
 
     def clear(self):
         """Clears the pixels on CodeBug.
@@ -176,3 +183,43 @@ class CodeBug(SerialChannelDevice):
             self.set_bulk(0, rows)
         else:
             self.or_mask_bulk(0, rows)
+
+    def config_extension_io(self):
+        self.set(CHANNEL_INDEX_EXT_CONF, EXTENSION_CONF_IO)
+
+    def config_extension_spi(self):
+        self.set(CHANNEL_INDEX_EXT_CONF, EXTENSION_CONF_SPI)
+
+    def config_extension_i2c(self):
+        self.set(CHANNEL_INDEX_EXT_CONF, EXTENSION_CONF_I2C)
+
+    def spi_transaction(self,
+                        data,
+                        cs_idle_high=1,
+                        input_sample_middle=1,
+                        spi_mode=0):
+        # control channel
+        spi_mode = (spi_mode & 0x03) << 3
+        input_sample_middle = (input_sample_middle & 1) << 2
+        cs_idle_high = (cs_idle_high & 1) << 1
+        go = 0x01
+        control = spi_mode | input_sample_middle | cs_idle_high | go
+        # put data into the buffer
+        self.set_buffer(0, list(data))
+        # set the length and control channels in one go
+        self.set_bulk(CHANNEL_INDEX_SPI_LENGTH, [len(data), control])
+        # return data from buffer
+        return self.get_buffer(0, len(data))
+
+    def i2c_transaction(self, messages):
+        for message in messages:
+            if type(message) == reading:
+
+
+
+
+
+from collections import namedtuple
+
+writing = namedtuple('I2CMsgWriting', ['address', 'data'])
+reading = namedtuple('I2CMsgReading', ['address', 'length'])
