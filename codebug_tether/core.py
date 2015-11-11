@@ -211,15 +211,40 @@ class CodeBug(SerialChannelDevice):
         # return data from buffer
         return self.get_buffer(0, len(data))
 
-    def i2c_transaction(self, messages):
+    def i2c_transaction(self, *messages):
+        # take stop out of all of them but add stop into the last one
         for message in messages:
-            if type(message) == reading:
-
-
-
+            self.
 
 
 from collections import namedtuple
 
-writing = namedtuple('I2CMsgWriting', ['address', 'data'])
-reading = namedtuple('I2CMsgReading', ['address', 'length'])
+I2C_CONTROL_GO_BUSY = 0x01
+I2C_CONTROL_SEND_ADDR = 0x02
+I2C_CONTROL_MASTER_FINAL_ACK = 0x04
+I2C_CONTROL_WAIT_FOR_ACK = 0x08
+I2C_CONTROL_ACK_AFTER_READ = 0x10
+I2C_CONTROL_START = 0x20
+I2C_CONTROL_STOP = 0x40
+
+I2CMsg = namedtuple('I2CMsg', ['control', 'address', 'data'])
+
+
+def writing(address, data):
+    return I2CMsg(control=(I2C_CONTROL_START |
+                           I2C_CONTROL_SEND_ADDR |
+                           I2C_CONTROL_WAIT_FOR_ACK |
+                           I2C_CONTROL_STOP),
+                  address=(address << 1),
+                  data=data,
+                  length=len(data))
+
+
+def reading(address, length):
+    return I2CMsg(control=(I2C_CONTROL_START |
+                           I2C_CONTROL_SEND_ADDR |
+                           I2C_CONTROL_WAIT_FOR_ACK |
+                           I2C_CONTROL_STOP),
+                  address=(address << 1) | 1, # set read bit in address
+                  data=None,
+                  length=length)
