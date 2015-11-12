@@ -4,6 +4,7 @@ import serial
 import struct
 from codebug_tether.serial_channel_device import SerialChannelDevice
 from codebug_tether.char_map import (char_map, StringSprite)
+from codebug_tether.i2c import *
 
 
 DEFAULT_SERIAL_PORT = '/dev/ttyACM0'
@@ -17,6 +18,9 @@ CHANNEL_INDEX_EXT_CONF = 10
 CHANNEL_INDEX_SPI_RATE = 11
 CHANNEL_INDEX_SPI_LENGTH = 12
 CHANNEL_INDEX_SPI_CONTROL = 13
+CHANNEL_INDEX_I2C_ADDR = 14
+CHANNEL_INDEX_I2C_LENGTH = 15
+CHANNEL_INDEX_I2C_CONTROL = 16
 
 EXTENSION_CONF_IO = 0
 EXTENSION_CONF_SPI = 1
@@ -198,6 +202,24 @@ class CodeBug(SerialChannelDevice):
                         cs_idle_high=1,
                         input_sample_middle=1,
                         spi_mode=0):
+        """Run an SPI transaction using the extensions pins. Be sure to
+        configure the extension pins first.
+
+        Example:
+
+            >>> import codebug_tether
+            >>>
+            >>> # setup
+            >>> codebug = codebug_tether.CodeBug()
+            >>> codebug.config_extension_spi()
+            >>>
+            >>> # transaction
+            >>> tx = (0x01, 0x02, 0x03)  # transmit this data
+            >>> rx = codebug.spi_transaction(tx)  # transaction returns data
+            >>> print(rx)
+            (4, 5, 6)
+
+        """
         # control channel
         spi_mode = (spi_mode & 0x03) << 3
         input_sample_middle = (input_sample_middle & 1) << 2
@@ -212,39 +234,59 @@ class CodeBug(SerialChannelDevice):
         return self.get_buffer(0, len(data))
 
     def i2c_transaction(self, *messages):
-        # take stop out of all of them but add stop into the last one
-        for message in messages:
-            self.
+        """Run an I2C transaction using the extensions pins. Be sure to
+        configure the extension pins first.
 
+        Example:
 
-from collections import namedtuple
+            >>> import codebug_tether
+            >>> from codebug_tether.i2c import (reading, writing)
+            >>>
+            >>> # example I2C address
+            >>> i2c_addr = 0x1C
+            >>>
+            >>> # setup
+            >>> codebug = codebug_tether.CodeBug()
+            >>> codebug.config_extension_i2c()
 
-I2C_CONTROL_GO_BUSY = 0x01
-I2C_CONTROL_SEND_ADDR = 0x02
-I2C_CONTROL_MASTER_FINAL_ACK = 0x04
-I2C_CONTROL_WAIT_FOR_ACK = 0x08
-I2C_CONTROL_ACK_AFTER_READ = 0x10
-I2C_CONTROL_START = 0x20
-I2C_CONTROL_STOP = 0x40
+        Single byte read transaction (read reg 0x12)
 
-I2CMsg = namedtuple('I2CMsg', ['control', 'address', 'data'])
+            >>> codebug.spi_transaction(writing(i2c_addr, 0x12), # reg addr
+                                        reading(i2c_addr, 1))    # read 1 reg
+            (42,)
 
+        Multiple byte read transaction (read regs 0x12-0x17)
 
-def writing(address, data):
-    return I2CMsg(control=(I2C_CONTROL_START |
-                           I2C_CONTROL_SEND_ADDR |
-                           I2C_CONTROL_WAIT_FOR_ACK |
-                           I2C_CONTROL_STOP),
-                  address=(address << 1),
-                  data=data,
-                  length=len(data))
+            >>> codebug.spi_transaction(writing(i2c_addr, 0x12), # reg addr
+                                        reading(i2c_addr, 6))    # read 6 reg
+            (65, 87, 47, 91, 43, 60)
 
+        Single byte write transaction (write value 0x34 to reg 0x12)
 
-def reading(address, length):
-    return I2CMsg(control=(I2C_CONTROL_START |
-                           I2C_CONTROL_SEND_ADDR |
-                           I2C_CONTROL_WAIT_FOR_ACK |
-                           I2C_CONTROL_STOP),
-                  address=(address << 1) | 1, # set read bit in address
-                  data=None,
-                  length=length)
+            >>> codebug.spi_transaction(writing(i2c_addr, 0x12, 0x34))
+
+        Multiple byte write transaction
+        (write values 0x34, 0x56, 0x78 to reg 0x12)
+
+            >>> codebug.spi_transaction(
+                    writing(i2c_addr, 0x12, 0x34, 0x56, 0x78))
+
+        """
+        rx_buffer = list()
+
+        def send_msg(msg):
+            self.set_buffer(0, msg.data)
+            self.set_bulk(CHANNEL_INDEX_I2C_ADDR,
+                          [msg.address, msg.length, msg.control])
+            if msg.control & I2C_CONTROL_READ_NOT_WRITE:
+                rx_buffer.extend(self.get_buffer(0, msg.length))
+
+        # send all messages except for the last one
+        for message in messages[:-1]:
+            send_msg(message)
+
+        # add stop control flag to the last message
+        messages[-1].control |= I2C_CONTROL_STOP
+        send_msg(messages[-1])
+
+        return rx_buffer

@@ -4,7 +4,6 @@ Change Log
 v0.5.0
 ------
 - Updated packet layer, better support for bulk commands and AND/OR masks.
-- Added sprite library.
 - Added extension pin control
 - Added I2C/SPI support.
 
