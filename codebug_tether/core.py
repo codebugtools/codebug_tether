@@ -233,9 +233,12 @@ class CodeBug(SerialChannelDevice):
         # return data from buffer
         return self.get_buffer(0, len(data))
 
-    def i2c_transaction(self, *messages):
+    def i2c_transaction(self, *messages, add_stop_last_message=True):
         """Run an I2C transaction using the extensions pins. Be sure to
         configure the extension pins first.
+
+        :param add_stop_last_message: Adds stop flag to the last I2CMessage.
+        :type add_stop_last_message: boolean
 
         Example:
 
@@ -251,42 +254,53 @@ class CodeBug(SerialChannelDevice):
 
         Single byte read transaction (read reg 0x12)
 
-            >>> codebug.spi_transaction(writing(i2c_addr, 0x12), # reg addr
+            >>> codebug.i2c_transaction(writing(i2c_addr, 0x12), # reg addr
                                         reading(i2c_addr, 1))    # read 1 reg
             (42,)
 
         Multiple byte read transaction (read regs 0x12-0x17)
 
-            >>> codebug.spi_transaction(writing(i2c_addr, 0x12), # reg addr
+            >>> codebug.i2c_transaction(writing(i2c_addr, 0x12), # reg addr
                                         reading(i2c_addr, 6))    # read 6 reg
             (65, 87, 47, 91, 43, 60)
 
         Single byte write transaction (write value 0x34 to reg 0x12)
 
-            >>> codebug.spi_transaction(writing(i2c_addr, 0x12, 0x34))
+            >>> codebug.i2c_transaction(writing(i2c_addr, 0x12, 0x34))
 
         Multiple byte write transaction
         (write values 0x34, 0x56, 0x78 to reg 0x12)
 
-            >>> codebug.spi_transaction(
+            >>> codebug.i2c_transaction(
                     writing(i2c_addr, 0x12, 0x34, 0x56, 0x78))
 
         """
+        # Can't use a tuple here because `+=` inside `send_msg` implicitly
+        # declares rx_buffer as a local variable (to send_msg).
         rx_buffer = list()
 
         def send_msg(msg):
+            """Sends a single i2c message."""
             self.set_buffer(0, msg.data)
+            # set the i2c address, length and control all in one go
             self.set_bulk(CHANNEL_INDEX_I2C_ADDR,
                           [msg.address, msg.length, msg.control])
+            # if reading, add data to rx_buffer
             if msg.control & I2C_CONTROL_READ_NOT_WRITE:
                 rx_buffer.extend(self.get_buffer(0, msg.length))
 
-        # send all messages except for the last one
-        for message in messages[:-1]:
-            send_msg(message)
+        if add_stop_last_message:
+            # send all messages except for the last one
+            for message in messages[:-1]:
+                send_msg(message)
 
-        # add stop control flag to the last message
-        messages[-1].control |= I2C_CONTROL_STOP
-        send_msg(messages[-1])
+            # add stop control flag to the last message
+            messages[-1].control |= I2C_CONTROL_STOP
+            send_msg(messages[-1])
 
-        return rx_buffer
+        else:
+            # send all messages
+            for message in messages:
+                send_msg(message)
+
+        return tuple(rx_buffer)
