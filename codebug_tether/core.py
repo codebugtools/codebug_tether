@@ -281,6 +281,13 @@ class CodeBug(SerialChannelDevice):
 
         def send_msg(msg):
             """Sends a single i2c message."""
+            # print("send_msg")
+            # print("address", hex(msg.address))
+            # print("msg.data", msg.data)
+            # print("length", msg.length)
+            # print("control", bin(msg.control))
+            # print()
+
             self.set_buffer(0, msg.data)
             # set the i2c address, length and control all in one go
             self.set_bulk(CHANNEL_INDEX_I2C_ADDR,
