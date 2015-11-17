@@ -233,12 +233,17 @@ class CodeBug(SerialChannelDevice):
         # return data from buffer
         return self.get_buffer(0, len(data))
 
-    def i2c_transaction(self, *messages, add_stop_last_message=True):
+    def i2c_transaction(self,
+                        *messages,
+                        add_stop_last_message=True,
+                        interval=0):
         """Run an I2C transaction using the extensions pins. Be sure to
         configure the extension pins first.
 
         :param add_stop_last_message: Adds stop flag to the last I2CMessage.
         :type add_stop_last_message: boolean
+        :param interval: Adds delay of `interval` seconds between I2C messages.
+        :type interval: interger
 
         Example:
 
@@ -287,7 +292,6 @@ class CodeBug(SerialChannelDevice):
             # print("length", msg.length)
             # print("control", bin(msg.control))
             # print()
-
             self.set_buffer(0, msg.data)
             # set the i2c address, length and control all in one go
             self.set_bulk(CHANNEL_INDEX_I2C_ADDR,
@@ -295,6 +299,7 @@ class CodeBug(SerialChannelDevice):
             # if reading, add data to rx_buffer
             if msg.control & I2C_CONTROL_READ_NOT_WRITE:
                 rx_buffer.extend(self.get_buffer(0, msg.length))
+            time.sleep(interval)
 
         if add_stop_last_message:
             # send all messages except for the last one
