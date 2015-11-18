@@ -10,7 +10,7 @@ COLOURTAIL_CONTROL_GO_BUSY = 0x01
 # bit 2
 COLOURTAIL_CONTROL_INIT_NOT_UPDATE = 0x02
 # bit 3-8 (init bits - only work when COLOURTAIL_CONTROL_INIT_NOT_UPDATE == 1)
-COLOURTAIL_CONTROL_LEG0_NOT_CS = 0x03
+COLOURTAIL_CONTROL_LEG0_NOT_CS = 0x04
 
 
 RGBPixel = namedtuple('RGBPixel', ['red', 'green', 'blue'])
@@ -44,7 +44,7 @@ class CodeBugColourTail():
 
     """
 
-    pixel_buffer = []
+    pixel_buffer = [RGBPixel(0, 0, 0)]*50
 
     def __init__(self, codebug):
         self.codebug = codebug
@@ -69,4 +69,4 @@ class CodeBugColourTail():
         control = COLOURTAIL_CONTROL_GO_BUSY
         self.codebug.set_buffer(0, codebug_buffer)
         self.codebug.set_bulk(CHANNEL_INDEX_COLOURTAIL_LENGTH,
-                              (len(codebug_buffer), control))
+                              (len(self.pixel_buffer), control))
