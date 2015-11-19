@@ -12,6 +12,8 @@ COLOURTAIL_CONTROL_INIT_NOT_UPDATE = 0x02
 # bit 3-8 (init bits - only work when COLOURTAIL_CONTROL_INIT_NOT_UPDATE == 1)
 COLOURTAIL_CONTROL_LEG0_NOT_CS = 0x04
 
+PIXEL_BUFFER_SIZE = 50
+
 
 RGBPixel = namedtuple('RGBPixel', ['red', 'green', 'blue'])
 
@@ -42,9 +44,24 @@ class CodeBugColourTail():
         colourtail.init(use_leg_not_cs=True)
         colourtail.update()
 
+    You can set the pixel buffer manually like so:
+
+        from codebug_tether import CodeBug
+        from codebug_tether.colourtail import (CodeBugColourTail, RGBPixel)
+
+        codebug = CodeBug()
+        colourtail = CodeBugColourTail(codebug)
+
+        # using CS pin
+        colourtail.init()
+        colourtail.pixel_buffer[0] = RGBPixel(255, 0, 0)
+        colourtail.pixel_buffer[1] = RGBPixel(0, 255, 0)
+        colourtail.pixel_buffer[1] = RGBPixel(0, 0, 255)
+        colourtail.update()  # turn on the LEDs
+
     """
 
-    pixel_buffer = [RGBPixel(0, 0, 0)]*50
+    pixel_buffer = [RGBPixel(0, 0, 0)]*PIXEL_BUFFER_SIZE
 
     def __init__(self, codebug):
         self.codebug = codebug
@@ -64,7 +81,7 @@ class CodeBugColourTail():
 
     def update(self):
         codebug_buffer = [value
-                          for pixel in self.pixel_buffer
+                          for pixel in self.pixel_buffer[:PIXEL_BUFFER_SIZE]
                           for value in (pixel.red, pixel.blue, pixel.green)]
         control = COLOURTAIL_CONTROL_GO_BUSY
         self.codebug.set_buffer(0, codebug_buffer)
