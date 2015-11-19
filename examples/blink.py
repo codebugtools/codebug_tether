@@ -1,5 +1,5 @@
-from codebug_tether import CodeBug
 import time
+from codebug_tether import CodeBug
 
 
 if __name__ == '__main__':

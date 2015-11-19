@@ -4,8 +4,9 @@ Change Log
 v0.5.0
 ------
 - Updated packet layer, better support for bulk commands and AND/OR masks.
-- Added extension pin control
+- Added extension pin control.
 - Added I2C/SPI support.
+- Added Colour Tail (WS2812) support.
 
 v0.4.3
 ------
