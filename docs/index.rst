@@ -15,7 +15,6 @@ Contents:
    codebug_tether
    installation
    example
-   reference
 
 
 Indices and tables
