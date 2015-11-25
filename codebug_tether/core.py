@@ -2,9 +2,8 @@ import os
 import time
 import serial
 import struct
-from codebug_tether.serial_channel_device import SerialChannelDevice
-from codebug_tether.char_map import (char_map, StringSprite)
 from codebug_tether.i2c import *
+from codebug_tether.serial_channel_device import SerialChannelDevice
 
 
 DEFAULT_SERIAL_PORT = '/dev/ttyACM0'
@@ -113,7 +112,8 @@ class CodeBug(SerialChannelDevice):
             21
 
         """
-        return self.get(min(row, 5))  # only row channels
+        row = self.get(min(row, 5))  # only row channels
+        return struct.unpack('B', row)[0]
 
     def set_col(self, col, val):
         """Sets an entire column of PIXELs on CodeBug.
@@ -122,13 +122,13 @@ class CodeBug(SerialChannelDevice):
             >>> codebug.set_col(0, 0b10101)
 
         """
-        rows = self.get_bulk(0, 5)
+        rows = struct.unpack('B'*5, self.get_bulk(0, 5))
         # clear col
         rows = [rows[i] & (0xff ^ (1 << (4-col))) for i in range(5)]
         # set cols
         val_bits = [(val >> i) & 1 for i in reversed(range(5))]
         rows = [rows[i] | (bit << (4-col)) for i, bit in enumerate(val_bits)]
-        self.set_bulk(0, rows)
+        self.set_bulk(0, bytes(rows))
 
     def get_col(self, col):
         """Returns an entire column of PIXELs on CodeBug.
@@ -138,7 +138,7 @@ class CodeBug(SerialChannelDevice):
             21
 
         """
-        rows = self.get_bulk(0, 5)
+        rows = struct.unpack('B'*5, self.get_bulk(0, 5))
         c = 0
         for row in rows:
             c <<= 1
@@ -165,30 +165,19 @@ class CodeBug(SerialChannelDevice):
             1
 
         """
-        return (self.get(min(y, 5)) >> (4 - x)) & 0x1
+        channel = min(y, 5)
+        bit_index = 4 - x
+        return self.get_bit(channel, bit_index)
 
-    def write_text(self, x, y, message, direction="right", clear_first=True):
-        """Writes some text on CodeBug at PIXEL (x, y).
-
-            >>> codebug = CodeBug()
-            >>> codebug.write_text(0, 0, 'Hello, CodeBug!')
-
-        """
-        rows = [0] * 5
-        s = StringSprite(message, direction)
-
-        for row_i, row in enumerate(s.pixel_state):
-            if (row_i - y) >= 0 and (row_i - y) <= 4:
-                code_bug_pixel_row = 0
-                for col_i, state in enumerate(row):
-                    if col_i + x >= 0 and col_i + x <= 4:
-                        code_bug_pixel_row |= state << 4 - (col_i + x)
-                rows[4-row_i+y] = code_bug_pixel_row
-
+    def draw_sprite(self, x, y, sprite, clear_first=True):
+        """Draws a sprite at (x, y) on CodeBug's 5x5 display."""
+        cb_display_sprite = sprite.get_sprite(-x, -y, 5, 5)
+        cb_rows = [cb_display_sprite.get_row(y)
+                   for y in range(cb_display_sprite.height)]
         if clear_first:
-            self.set_bulk(0, rows)
+            self.set_bulk(0, bytes(cb_rows))
         else:
-            self.or_mask_bulk(0, rows)
+            self.or_mask_bulk(0, bytes(cb_rows))
 
     def config_extension_io(self):
         self.set(CHANNEL_INDEX_EXT_CONF, EXTENSION_CONF_IO)
@@ -216,10 +205,10 @@ class CodeBug(SerialChannelDevice):
             >>> codebug.config_extension_spi()
             >>>
             >>> # transaction
-            >>> tx = (0x01, 0x02, 0x03)  # transmit this data
+            >>> tx = bytes((0x01, 0x02, 0x03))  # transmit this data
             >>> rx = codebug.spi_transaction(tx)  # transaction returns data
             >>> print(rx)
-            (4, 5, 6)
+            b'\xff\xff\xff'
 
         """
         # control channel
@@ -231,7 +220,7 @@ class CodeBug(SerialChannelDevice):
         # put data into the buffer
         self.set_buffer(0, list(data))
         # set the length and control channels in one go
-        self.set_bulk(CHANNEL_INDEX_SPI_LENGTH, [len(data), control])
+        self.set_bulk(CHANNEL_INDEX_SPI_LENGTH, bytes([len(data), control]))
         # return data from buffer
         return self.get_buffer(0, len(data))
 
@@ -300,7 +289,9 @@ class CodeBug(SerialChannelDevice):
                           [msg.address, msg.length, msg.control])
             # if reading, add data to rx_buffer
             if msg.control & I2C_CONTROL_READ_NOT_WRITE:
-                rx_buffer.extend(self.get_buffer(0, msg.length))
+                values = struct.unpack('B'*msg.length,
+                                       self.get_buffer(0, msg.length))
+                rx_buffer.extend(values)
             time.sleep(interval)
 
         if add_stop_last_message:

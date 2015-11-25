@@ -18,35 +18,37 @@ if __name__ == '__main__':
 
     # initialise the colourtail (using EXT_CS pin)
     colourtail.init()
-    # colourtail.set_pixel(0, 255, 0, 0)  # red
-    # colourtail.set_pixel(1, 0, 255, 0)  # green
-    # colourtail.set_pixel(2, 0, 0, 255)  # blue
-    # colourtail.update()  # turn on the LEDs
+    colourtail.set_pixel(0, 255, 0, 0)  # red
+    colourtail.set_pixel(1, 0, 255, 0)  # green
+    colourtail.set_pixel(2, 0, 0, 255)  # blue
+    colourtail.set_pixel(3, 0, 255, 0)
+    colourtail.set_pixel(4, 255, 0, 0)
+    colourtail.update()  # turn on the LEDs
 
-    # do the loopy spiral thing
-    current_colour = 'red'
-    red = 0
-    green = 0
-    blue = 0
-    i = 0
-    num_leds = 16
-    while True:
-        if current_colour == 'red':
-            red += 1
-            if red >= 255:
-                red = 0
-                current_colour = 'green'
-        elif current_colour == 'green':
-            green += 1
-            if green >= 255:
-                green = 0
-                current_colour = 'blue'
-        elif current_colour == 'blue':
-            blue += 1
-            if blue >= 255:
-                blue = 0
-                current_colour = 'red'
-        colourtail.set_pixel(i, red, green, blue)
-        colourtail.update()  # turn on the LEDs
-        i = (i + 1) % num_leds
-        time.sleep(0.005)
+    # # do the loopy spiral thing
+    # current_colour = 'red'
+    # red = 0
+    # green = 0
+    # blue = 0
+    # i = 0
+    # num_leds = 5
+    # while True:
+    #     if current_colour == 'red':
+    #         red += 1
+    #         if red >= 255:
+    #             red = 0
+    #             current_colour = 'green'
+    #     elif current_colour == 'green':
+    #         green += 1
+    #         if green >= 255:
+    #             green = 0
+    #             current_colour = 'blue'
+    #     elif current_colour == 'blue':
+    #         blue += 1
+    #         if blue >= 255:
+    #             blue = 0
+    #             current_colour = 'red'
+    #     colourtail.set_pixel(i, red, green, blue)
+    #     colourtail.update()  # turn on the LEDs
+    #     i = (i + 1) % num_leds
+    #     time.sleep(0.005)

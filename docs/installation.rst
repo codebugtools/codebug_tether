@@ -14,7 +14,7 @@ It is reccomended that you install using virtual environments.
 Setting up CodeBug
 ------------------
 In order to communicate with CodeBug over Serial USB you need to program CodeBug with
-``codebug_tether.cbg`` (`download <https://github.com/codebugtools/codebug_tether/blob/master/firmware/codebug_tether.cbg?raw=true>`_).
+``codebug_tether.cbg`` (|firmwaredownload|).
 To do this, plug in CodeBug via USB while holding button A --- it should
 appear as a USB drive --- then copy onto it the ``codebug_tether.cbg`` file.
 CodeBug is now ready to be used via Serial USB. Press button B to exit

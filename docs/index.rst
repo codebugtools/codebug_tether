@@ -15,7 +15,6 @@ Contents:
    codebug_tether
    installation
    example
-   codebug_emulator
    reference
 
 

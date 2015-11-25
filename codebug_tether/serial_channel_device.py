@@ -17,7 +17,8 @@ CMD_SET_BUFFER = 7
 
 
 class SerialChannelDevice():
-    """A serial device with single-byte channels and several-byte buffers.
+    """A serial device with single-byte channels and several-byte
+    buffers.
 
     Channels can be GET/SET individually or in bulk.
 
@@ -59,7 +60,7 @@ class SerialChannelDevice():
         self.transaction(
             struct.pack('B', (CMD_GET << 5) | (channel_index & 0x1f)))
         # Serial port will now contain channel data
-        return struct.unpack('B', self.serial_port.read(1))[0]
+        return self.serial_port.read(1)
 
     def set(self, channel_index, value):
         """Returns SetPacket as bytes.
@@ -79,8 +80,8 @@ class SerialChannelDevice():
                         value))
 
     def get_bulk(self, channel_index, length):
-        """GET BULK packet for retrieving multiple adjacent channel values
-        in one go.
+        """GET BULK packet for retrieving multiple adjacent channel
+        values in one go.
 
             +--------+---------------------+--------+
             | cmd id | start channel index | length |
@@ -94,11 +95,11 @@ class SerialChannelDevice():
                         (CMD_GET_BULK << 5 | channel_index & 0x1f),
                         length))
         # Serial port will now contain channel data
-        return struct.unpack('B'*length, self.serial_port.read(length))
+        return self.serial_port.read(length)
 
     def set_bulk(self, channel_index, values):
-        """SET BULK packet for setting multiple adjacent channel values in
-        one go.
+        """SET BULK packet for setting multiple adjacent channel values
+        in one go.
 
             +--------+-----------------+-----+------------+
             | cmd id | start ch. index | len | values     |
@@ -125,9 +126,8 @@ class SerialChannelDevice():
 
         """
         self.transaction(
-            struct.pack('BB',
-                        (CMD_AND << 5 | channel_index & 0x1f),
-                        mask))
+            struct.pack('B', (CMD_AND << 5 | channel_index & 0x1f)) + \
+            bytes(mask))
 
     def or_mask(self, channel_index, mask):
         """Returns OrPacket as bytes.
@@ -142,20 +142,20 @@ class SerialChannelDevice():
 
         """
         self.transaction(
-            struct.pack('BB',
-                        (CMD_OR << 5 | channel_index & 0x1f),
-                        mask))
+            struct.pack('B', (CMD_OR << 5 | channel_index & 0x1f)) + \
+            bytes(mask))
 
     def set_bit(self, channel_index, bit_index, state):
         """Sets a bit in a channel to state."""
         if state:
-            self.or_mask(channel_index, 1 << bit_index)
+            self.or_mask(channel_index, bytes((1 << bit_index,)))
         else:
-            self.and_mask(channel_index, 0xff ^ (1 << bit_index))
+            self.and_mask(channel_index, bytes((0xff ^ (1 << bit_index),)))
 
     def get_bit(self, channel_index, bit_index):
         """Returns a bit from a channel."""
-        return (self.get(channel_index) >> bit_index) & 0x1
+        value = struct.unpack('B', self.get(channel_index))[0]
+        return (value >> bit_index) & 0x1
 
     def get_buffer(self, buffer_index, length, offset=0):
         """GET BUFFER packet for reading whole buffers.
@@ -173,7 +173,7 @@ class SerialChannelDevice():
                         offset,
                         length))
         # Serial port will now contain buffer data
-        return struct.unpack('B'*length, self.serial_port.read(length))
+        return self.serial_port.read(length)
 
     def set_buffer(self, buffer_index, values, offset=0):
         """SET BUFFER packet for setting whole buffers.
