@@ -97,7 +97,7 @@ configure ColourTails to be driven from leg 0.
     >>> colourtail.update()  # turn on the LEDs
 
     >>> # initialise the colourtail (using LEG_0 pin)
-    >>> colourtail.init(use_leg_not_cs=True)
+    >>> colourtail.init(use_leg_0_not_cs=True)
     >>> colourtail.set_pixel(0, 255, 0, 0)  # red
     >>> colourtail.set_pixel(1, 255, 0, 0)  # red
     >>> colourtail.set_pixel(2, 0, 255, 0)  # green

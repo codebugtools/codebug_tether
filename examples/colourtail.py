@@ -17,13 +17,16 @@ if __name__ == '__main__':
     codebug.set_row(0, 0b00100)
 
     # initialise the colourtail (using EXT_CS pin)
-    colourtail.init()
+    # colourtail.init()
+    colourtail.init(use_leg_0_not_cs=True)
     colourtail.set_pixel(0, 255, 0, 0)  # red
     colourtail.set_pixel(1, 0, 255, 0)  # green
     colourtail.set_pixel(2, 0, 0, 255)  # blue
     colourtail.set_pixel(3, 0, 255, 0)
     colourtail.set_pixel(4, 255, 0, 0)
     colourtail.update()  # turn on the LEDs
+
+
 
     # # do the loopy spiral thing
     # current_colour = 'red'

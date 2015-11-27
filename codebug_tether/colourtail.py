@@ -41,7 +41,7 @@ class CodeBugColourTail():
         colourtail.update()  # turn on the LEDs
 
         # use leg 0 instead
-        colourtail.init(use_leg_not_cs=True)
+        colourtail.init(use_leg_0_not_cs=True)
         colourtail.update()
 
     You can set the pixel buffer manually like so:
@@ -66,10 +66,10 @@ class CodeBugColourTail():
     def __init__(self, codebug):
         self.codebug = codebug
 
-    def init(self, use_leg_not_cs=False):
+    def init(self, use_leg_0_not_cs=False):
         control = (COLOURTAIL_CONTROL_GO_BUSY |
                    COLOURTAIL_CONTROL_INIT_NOT_UPDATE)
-        if use_leg_not_cs:
+        if use_leg_0_not_cs:
             control |= COLOURTAIL_CONTROL_LEG0_NOT_CS
         self.codebug.set(CHANNEL_INDEX_COLOURTAIL_CONTROL, control)
 
@@ -80,9 +80,10 @@ class CodeBugColourTail():
         self.pixel_buffer[index] = RGBPixel(red=red, green=green, blue=blue)
 
     def update(self):
+        # WS2812 order is green, red, blue
         codebug_buffer = [value
                           for pixel in self.pixel_buffer[:PIXEL_BUFFER_SIZE]
-                          for value in (pixel.red, pixel.blue, pixel.green)]
+                          for value in (pixel.green, pixel.red, pixel.blue)]
         control = COLOURTAIL_CONTROL_GO_BUSY
         self.codebug.set_buffer(0, codebug_buffer)
         self.codebug.set_bulk(CHANNEL_INDEX_COLOURTAIL_LENGTH,
