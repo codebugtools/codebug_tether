@@ -17,7 +17,7 @@ In order to communicate with CodeBug over Serial USB you need to program CodeBug
 ``codebug_tether.cbg`` (|firmwaredownload|).
 To do this, plug in CodeBug via USB while holding button A --- it should
 appear as a USB drive --- then copy onto it the ``codebug_tether.cbg`` file.
-CodeBug is now ready to be used via Serial USB. Press button B to exit
+CodeBug is now ready to be used via serial USB. Press button B to exit
 programming mode.
 
 When CodeBug is connected to a computer via USB is should now appear as a
