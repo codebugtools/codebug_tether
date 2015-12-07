@@ -112,9 +112,9 @@ Extension Header
 You can use the extension header to drive SPI and I2C buses.
 
 .. DANGER::
-   Powering CodeBug from 5V USB means that devices connected to the
-   extension header will also be powered with 5V USB.
-   DO NOT USE THIS TO POWER DEVICES WHICH REQUIRE LESS THAN 5V.
+   Powering CodeBug from 5V USB means that the VCC pin on the extension
+   header will also be at 5V. Do not use this pin to power devices which
+   require less than 5V.
 
 Connect your SPI/I2C device onto the SPI/I2C lines::
 
@@ -158,11 +158,12 @@ SPI
     >>> codebug.config_extension_spi()
 
     >>> # send three bytes (get three bytes back -- SPI is duplex)
-    >>> codebug.spi_transaction(bytes(0x12, 0x34, 0x56))
+    >>> codebug.spi_transaction(bytes((0x12, 0x34, 0x56)))
     b'\xff\xff\xff'
 
 
 I2C
+---
 ::
 
     >>> import codebug_tether
