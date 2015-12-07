@@ -95,6 +95,15 @@ class CodeBug(SerialChannelDevice):
         """
         self.set_bulk(0, [0]*5)
 
+    def fill(self):
+        """Sets all pixels on.
+
+            >>> codebug = CodeBug()
+            >>> codebug.fill()
+
+        """
+        self.set_bulk(0, [0x1f]*5)
+
     def set_row(self, row, val):
         """Sets a row of PIXELs on CodeBug.
 
