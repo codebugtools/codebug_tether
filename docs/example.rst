@@ -49,10 +49,10 @@ You can use the sprites library to quickly draw things on CodeBug's display.
 ::
 
     >>> import codebug_tether
-    >>> import codebug_tether.sprite
+    >>> import codebug_tether.sprites
 
     >>> # create a 3x3 square with the middle pixel off
-    >>> square_sprite = codebug_tether.sprite.Sprite(3, 3)
+    >>> square_sprite = codebug_tether.sprites.Sprite(3, 3)
     >>> square_sprite.set_row(0, 0b111)
     >>> square_sprite.set_row(1, 0b101)
     >>> square_sprite.set_row(2, 0b111)
@@ -62,7 +62,7 @@ You can use the sprites library to quickly draw things on CodeBug's display.
     >>> codebug.draw_sprite(1, 1, square_sprite)
 
     >>> # write some text
-    >>> message = codebug_tether.sprite.StringSprite('Hello CodeBug!')
+    >>> message = codebug_tether.sprites.StringSprite('Hello CodeBug!')
     >>> codebug.draw_sprite(0, 0, message)
     >>> # move it along
     >>> codebug.draw_sprite(-2, 0, message)
