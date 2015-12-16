@@ -25,11 +25,13 @@ class CodeBugI2CMaster():
 
     For example:
 
+        import codebug_tether
         from codebug_tether.i2c import (I2CMaster, writing)
 
-        with I2CMaster() as i2c:
-            i2c.transaction(
-                writing(0x20, bytes([0x01, 0xFF])))
+        codebug = codebug_tether.CodeBug()
+
+        with I2CMaster(codebug) as i2c:
+            i2c.transaction(writing(0x20, bytes([0x01, 0xFF])))
 
     """
     def __init__(self, codebug):

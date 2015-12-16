@@ -20,12 +20,38 @@ CHANNEL_INDEX_SPI_CONTROL = 13
 CHANNEL_INDEX_I2C_ADDR = 14
 CHANNEL_INDEX_I2C_LENGTH = 15
 CHANNEL_INDEX_I2C_CONTROL = 16
-CHANNEL_INDEX_COLOURTAIL_LENGTH = 17
-CHANNEL_INDEX_COLOURTAIL_CONTROL = 18
+CHANNEL_INDEX_UART_RX_OFFSET = 17
+CHANNEL_INDEX_UART_RX_LENGTH = 18
+CHANNEL_INDEX_UART_TX_OFFSET = 19
+CHANNEL_INDEX_UART_TX_LENGTH = 20
+CHANNEL_INDEX_UART_CONTROL = 21
+CHANNEL_INDEX_COLOURTAIL_LENGTH = 22
+CHANNEL_INDEX_COLOURTAIL_CONTROL = 23
 
-EXTENSION_CONF_IO = 0
-EXTENSION_CONF_SPI = 1
-EXTENSION_CONF_I2C = 2
+EXTENSION_CONF_IO = 0x01
+EXTENSION_CONF_SPI = 0x02
+EXTENSION_CONF_I2C = 0x04
+EXTENSION_CONF_UART = 0x08
+
+UART_TX_BUFFER_INDEX = 0
+UART_RX_BUFFER_INDEX = 1
+
+UART_TX_GO_BUSY_MASK = 0x01
+UART_RX_GO_BUSY_MASK = 0x02
+UART_BAUD_300 = 0 << 2
+UART_BAUD_1200 = 1 << 2
+UART_BAUD_2400 = 2 << 2
+UART_BAUD_9600 = 3 << 2
+UART_BAUD_10417 = 4 << 2
+UART_BAUD_19200 = 5 << 2
+UART_BAUD_57600 = 6 << 2
+UART_BAUD_115200 = 7 << 2
+
+UART_DEFAULT_BAUD = 9600
+
+
+class InvalidBaud(Exception):
+    pass
 
 
 class CodeBug(SerialChannelDevice):
@@ -197,6 +223,9 @@ class CodeBug(SerialChannelDevice):
     def config_extension_i2c(self):
         self.set(CHANNEL_INDEX_EXT_CONF, EXTENSION_CONF_I2C)
 
+    def config_extension_uart(self):
+        self.set(CHANNEL_INDEX_EXT_CONF, EXTENSION_CONF_UART)
+
     def spi_transaction(self,
                         data,
                         cs_idle_high=1,
@@ -318,3 +347,94 @@ class CodeBug(SerialChannelDevice):
                 send_msg(message)
 
         return tuple(rx_buffer)
+
+    def _get_uart_control_baud(self, baud):
+        """Returns UART control value for given baud rate. Will raise
+        InvalidBaud exception if baud is invalid.
+        """
+        baud_control = {300: 0 << 2,
+                        1200: 1 << 2,
+                        2400: 2 << 2,
+                        9600: 3 << 2,
+                        10417: 4 << 2,
+                        19200: 5 << 2,
+                        57600: 6 << 2,
+                        115200: 7 << 2}
+        if baud not in baud_control:
+            raise InvalidBaud('{} is not a valid baud rate (valid baud '
+                'rates: {}).'.format(baud, tuple(baud_control.keys())))
+        else:
+            return baud_control[baud]
+
+    def uart_set_baud(self, baud):
+        self.set(CHANNEL_INDEX_UART_CONTROL, self._get_uart_control_baud(baud))
+
+    def uart_tx(self, data_bytes, baud=UART_DEFAULT_BAUD):
+        """Transmits data bytes over UART. Use this if you just want to
+        send X amount of data. Be sure to configure the extension pins
+        first. For example:
+
+            >>> from codebug_tether import CodeBug
+            >>> codebug = CodeBug()
+            >>> codebug.config_extension_uart()
+            >>> # send 0xAA, 0xBB over UART
+            >>> codebug.uart_tx(bytes((0xAA, 0xBB)))
+            >>> # send 0xAA, 0xBB over UART at 300 baud
+            >>> codebug.uart_tx(bytes((0xAA, 0xBB)), baud=300)
+
+        """
+        self.uart_tx_set_buffer(data_bytes)
+        self.uart_tx_start(len(data_bytes))
+
+    def uart_tx_start(self, length, offset=0, baud=UART_DEFAULT_BAUD):
+        """Transmits 'length' data bytes from UART buffer starting at
+        'offset' over UART. Be sure to configure the extension pins
+        first. For example, you might want to fill the buffer with two
+        commands (0xAA and 0xBB) which are sent over UART and only send
+        one at a time:
+
+            >>> from codebug_tether import CodeBug
+            >>> codebug = CodeBug()
+            >>> codebug.config_extension_uart()
+            >>> codebug.uart_tx_set_buffer(bytes((0xAA, 0xBB)))
+            >>> codebug.uart_tx_start(1, offset=0)  # send 0xAA over UART
+            >>> codebug.uart_tx_start(1, offset=1)  # send 0xBB over UART
+            >>> # send 0xAA over UART at 300 baud
+            >>> codebug.uart_tx_start(1, offset=0, baud=300)
+
+        """
+        control = self._get_uart_control_baud(baud) | UART_TX_GO_BUSY_MASK
+        self.set_bulk(CHANNEL_INDEX_UART_TX_OFFSET,
+                      bytes((offset, length, control)))
+
+    def uart_tx_set_buffer(self, data_bytes, offset=0):
+        """Add data_bytes to the UART buffer at offset."""
+        self.set_buffer(UART_TX_BUFFER_INDEX, data_bytes, offset)
+
+    def uart_rx_start(self, length, baud=UART_DEFAULT_BAUD, offset=0):
+        """Begins receiving on the UART. RX will stop when length data is
+        reached. Be sure to configure the extension pins first. For example
+
+            >>> from codebug_tether import CodeBug
+            >>> codebug = CodeBug()
+            >>> codebug.config_extension_uart()
+            >>> codebug.uart_rx_start(2)  # ready to receive 2B over UART
+            >>> # wait until data ready (alternatively, sleep X seconds)
+            >>> while not codebug.uart_rx_is_ready():
+            ...     pass
+            ...
+            >>> codebug.uart_rx_get_buffer(2)  # read out the two bytes
+
+        """
+        self.set_bulk(CHANNEL_INDEX_UART_RX_OFFSET, bytes((offset, length)))
+        self.set(CHANNEL_INDEX_UART_CONTROL,
+                 self._get_uart_control_baud(baud) | UART_RX_GO_BUSY_MASK)
+
+    def uart_rx_is_ready(self):
+        """Returns True if the UART has finished receiving data."""
+        uart_control = self.get(CHANNEL_INDEX_UART_CONTROL)[0]
+        return uart_control & UART_RX_GO_BUSY_MASK == 0
+
+    def uart_rx_get_buffer(self, length, offset=0):
+        """Returns data bytes from UART buffer."""
+        return self.get_buffer(UART_RX_BUFFER_INDEX, length, offset)

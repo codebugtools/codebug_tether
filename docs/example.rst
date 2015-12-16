@@ -146,6 +146,7 @@ You can configure the extension header mode with the following methods::
 
     >>> codebug.config_extension_spi()  # configure extension as SPI
     >>> codebug.config_extension_i2c()  # configure extension as I2C
+    >>> codebug.config_extension_uart()  # configure extension as UART
     >>> codebug.config_extension_io()   # reset extension as normal I/O
 
 SPI
@@ -196,3 +197,47 @@ Multiple byte write transaction (write values 0x34, 0x56, 0x78 to reg 0x12)::
 
     >>> codebug.i2c_transaction(
             writing(i2c_addr, 0x12, 0x34, 0x56, 0x78))
+
+
+UART
+----
+Sending data::
+
+    >>> import codebug_tether
+    >>> codebug = codebug_tether.CodeBug()
+    >>> codebug.config_extension_uart()
+    >>>
+    >>> # send 0xAA, 0xBB over UART
+    >>> codebug.uart_tx(bytes((0xAA, 0xBB)))
+    >>>
+    >>> # send 0xAA, 0xBB over UART at 300 baud
+    >>> codebug.uart_tx(bytes((0xAA, 0xBB)), baud=300)
+
+You can also write to the buffer first and then send data from within
+it::
+
+    >>> import codebug_tether
+    >>> codebug = codebug_tether.CodeBug()
+    >>> codebug.config_extension_uart()
+    >>>
+    >>> codebug.uart_tx_set_buffer(bytes((0xAA, 0xBB)))
+    >>>
+    >>> codebug.uart_tx_start(1, offset=0)  # send 0xAA over UART
+    >>> codebug.uart_tx_start(1, offset=1)  # send 0xBB over UART
+    >>>
+    >>> # send 0xAA over UART at 300 baud
+    >>> codebug.uart_tx_start(1, offset=0, baud=300)
+
+Receiving data::
+
+    >>> import codebug_tether
+    >>> codebug = codebug_tether.CodeBug()
+    >>> codebug.config_extension_uart()
+    >>>
+    >>> codebug.uart_rx_start(2)  # ready to receive 2B over UART
+    >>>
+    >>> # wait until data ready (alternatively, sleep X seconds)
+    >>> while not codebug.uart_rx_is_ready():
+    ...     pass
+    ...
+    >>> codebug.uart_rx_get_buffer(2)  # read out the two bytes
