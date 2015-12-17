@@ -144,10 +144,10 @@ You can configure the extension header mode with the following methods::
 
     >>> codebug = codebug_tether.CodeBug()
 
-    >>> codebug.config_extension_spi()  # configure extension as SPI
-    >>> codebug.config_extension_i2c()  # configure extension as I2C
+    >>> codebug.config_extension_spi()   # configure extension as SPI
+    >>> codebug.config_extension_i2c()   # configure extension as I2C
     >>> codebug.config_extension_uart()  # configure extension as UART
-    >>> codebug.config_extension_io()   # reset extension as normal I/O
+    >>> codebug.config_extension_io()    # reset extension as normal I/O
 
 SPI
 ---
