@@ -89,6 +89,9 @@ configure ColourTails to be driven from leg 0.
     >>> codebug.set_row(1, 0b01110)
     >>> codebug.set_row(0, 0b00100)
 
+    >>> # make sure the extension header is configured as I/O
+    >>> codebug.config_extension_io()
+
     >>> # initialise the colourtail (using EXT_CS pin)
     >>> colourtail.init()
     >>> colourtail.set_pixel(0, 255, 0, 0)  # red
