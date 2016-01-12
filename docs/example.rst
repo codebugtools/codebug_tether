@@ -67,6 +67,45 @@ You can use the sprites library to quickly draw things on CodeBug's display.
     >>> # move it along
     >>> codebug.draw_sprite(-2, 0, message)
 
+You can do some more interesting things with Sprites::
+
+    >>> import codebug_tether.sprites
+
+    >>> sprite = codebug_tether.sprites.Sprite(10, 10)
+
+    >>> # basic gets and sets
+    >>> sprite.set_pixel(0, 0, 1)
+    >>> sprite.get_pixel(0, 0)
+    1
+    >>> sprite.set_row(0, 0, 0b1111111111)
+    >>> sprite.get_row(0)
+    1023
+    >>> sprite.set_col(0, 0, 0b1111111111)
+    >>> sprite.get_col(0)
+    1023
+
+    >>> # transform the sprite
+    >>> sprite.invert_horizontal()
+    >>> sprite.invert_vertical()
+    >>> sprite.invert_diagonal()
+    >>> sprite.rotate90()
+    >>> sprite.rotate90(rotation=2)  # rotate 180 degrees
+
+    >>> # clone or extract parts of the sprite
+    >>> dolly_sprite = sprite.clone()
+    >>> rectangle = sprite.get_sprite(3, 3, 5, 2)
+
+    >>> # draw other sprites
+    >>> sprite.render_sprite(1, 1, rectangle)
+
+You can also change the direction text is written in::
+
+    >>> from codebug_tether.sprites import StringSprite
+    >>> left_to_right_msg = StringSprite('Hello CodeBug!')
+    >>> right_to_left_msg = StringSprite('Hello CodeBug!', direction='L')
+    >>> top_to_bottom_msg = StringSprite('Hello CodeBug!', direction='D')
+    >>> bottom_to_top_msg = StringSprite('Hello CodeBug!', direction='U')
+
 
 Colour Tail
 ===========
