@@ -98,7 +98,7 @@ class CodeBug(SerialChannelDevice):
 
         """
         input_index = self._int_input_index(input_index)
-        self.set_bit(CHANNEL_INDEX_PULLUPS, input_index, direction)
+        self.set_bit(CHANNEL_INDEX_PULLUPS, input_index, state)
 
     def set_output(self, output_index, state):
         """Sets the output index to state."""
