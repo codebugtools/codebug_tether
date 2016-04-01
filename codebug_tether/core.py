@@ -8,25 +8,39 @@ from codebug_tether.serial_channel_device import SerialChannelDevice
 
 DEFAULT_SERIAL_PORT = '/dev/ttyACM0'
 
-CHANNEL_INDEX_OUTPUT = 5
-CHANNEL_INDEX_LEG_INPUT = 6
-CHANNEL_INDEX_BUTTON_INPUT = 7
-CHANNEL_INDEX_IO_DIRECTION = 8
-CHANNEL_INDEX_PULLUPS = 9
-CHANNEL_INDEX_EXT_CONF = 10
-CHANNEL_INDEX_SPI_RATE = 11
-CHANNEL_INDEX_SPI_LENGTH = 12
-CHANNEL_INDEX_SPI_CONTROL = 13
-CHANNEL_INDEX_I2C_ADDR = 14
-CHANNEL_INDEX_I2C_LENGTH = 15
-CHANNEL_INDEX_I2C_CONTROL = 16
-CHANNEL_INDEX_UART_RX_OFFSET = 17
-CHANNEL_INDEX_UART_RX_LENGTH = 18
-CHANNEL_INDEX_UART_TX_OFFSET = 19
-CHANNEL_INDEX_UART_TX_LENGTH = 20
-CHANNEL_INDEX_UART_CONTROL = 21
-CHANNEL_INDEX_COLOURTAIL_LENGTH = 22
-CHANNEL_INDEX_COLOURTAIL_CONTROL = 23
+IO_DIGITAL_OUTPUT = 0
+IO_DIGITAL_INPUT = 1
+IO_ANALOG_INPUT = 2
+IO_PWM_OUTPUT = 3
+
+# CHANNEL_INDEX_ROW_0 = 0
+# CHANNEL_INDEX_ROW_1 = 1
+# CHANNEL_INDEX_ROW_2 = 2
+# CHANNEL_INDEX_ROW_3 = 3
+# CHANNEL_INDEX_ROW_4 = 4
+(CHANNEL_INDEX_OUTPUT,
+CHANNEL_INDEX_LEG_INPUT,
+CHANNEL_INDEX_BUTTON_INPUT,
+CHANNEL_INDEX_ANALOGUE_INPUT_0,
+CHANNEL_INDEX_ANALOGUE_INPUT_1,
+CHANNEL_INDEX_ANALOGUE_INPUT_2,
+CHANNEL_INDEX_IO_DIRECTION_LEGS,
+CHANNEL_INDEX_IO_DIRECTION_EXT,
+CHANNEL_INDEX_PULLUPS,
+CHANNEL_INDEX_EXT_CONF,
+CHANNEL_INDEX_SPI_RATE,
+CHANNEL_INDEX_SPI_LENGTH,
+CHANNEL_INDEX_SPI_CONTROL,
+CHANNEL_INDEX_I2C_ADDR,
+CHANNEL_INDEX_I2C_LENGTH,
+CHANNEL_INDEX_I2C_CONTROL,
+CHANNEL_INDEX_UART_RX_OFFSET,
+CHANNEL_INDEX_UART_RX_LENGTH,
+CHANNEL_INDEX_UART_TX_OFFSET,
+CHANNEL_INDEX_UART_TX_LENGTH,
+CHANNEL_INDEX_UART_CONTROL,
+CHANNEL_INDEX_COLOURTAIL_LENGTH,
+CHANNEL_INDEX_COLOURTAIL_CONTROL) = range(5, 25)
 
 EXTENSION_CONF_IO = 0x01
 EXTENSION_CONF_SPI = 0x02
@@ -88,6 +102,23 @@ class CodeBug(SerialChannelDevice):
             channel_index = CHANNEL_INDEX_LEG_INPUT
         return self.get_bit(channel_index, input_index)
 
+    def read_analogue(self, leg_index):
+        """Reads the analogue value of the leg at leg_index. The leg must
+        first be configured as an analogue input. For example:
+
+            >>> codebug = CodeBug()
+            >>> codebug.set_leg_io(0, IO_ANALOG_INPUT)
+            >>> codebug.read_analogue(0)
+            128
+
+        """
+        if leg_index == 0:
+            return self.get(CHANNEL_INDEX_ANALOGUE_INPUT_0)
+        elif leg_index == 1:
+            return self.get(CHANNEL_INDEX_ANALOGUE_INPUT_1)
+        elif leg_index == 2:
+            return self.get(CHANNEL_INDEX_ANALOGUE_INPUT_2)
+
     def set_pullup(self, input_index, state):
         """Sets the state of the input pullups. Turn off to enable touch
         sensitive pads (bridge GND and input with fingers).
@@ -109,8 +140,26 @@ class CodeBug(SerialChannelDevice):
         return self.get_bit(CHANNEL_INDEX_OUTPUT, output_index)
 
     def set_leg_io(self, leg_index, direction):
-        """Sets the I/O direction of the leg at index."""
-        self.set_bit(CHANNEL_INDEX_IO_DIRECTION, leg_index, direction)
+        """Sets the I/O direction of the leg at index. For example:
+
+            >>> codebug = CodeBug()
+            >>> codebug.set_leg_io(0, IO_DIGITAL_OUTPUT)
+            >>> codebug.set_leg_io(0, IO_PWM_OUTPUT)
+            >>> codebug.set_leg_io(1, IO_DIGITAL_INPUT)
+            >>> codebug.set_leg_io(2, IO_ANALOG_INPUT)
+
+        """
+        if leg_index < 4:
+            clear_mask = 0b11 << leg_index * 2
+            direction_mask = (0b11 & direction) << leg_index * 2
+            self.and_mask(CHANNEL_INDEX_IO_DIRECTION_LEGS, clear_mask)
+            self.or_mask(CHANNEL_INDEX_IO_DIRECTION_LEGS, direction_mask)
+        else:
+            ext_index = leg_index - 4
+            clear_mask = 0b11 << ext_index * 2
+            direction_mask = (0b11 & direction) << ext_index * 2
+            self.and_mask(CHANNEL_INDEX_IO_DIRECTION_EXT, clear_mask)
+            self.or_mask(CHANNEL_INDEX_IO_DIRECTION_EXT, direction_mask)
 
     def clear(self):
         """Clears the pixels on CodeBug.
