@@ -40,7 +40,10 @@ CHANNEL_INDEX_UART_TX_OFFSET,
 CHANNEL_INDEX_UART_TX_LENGTH,
 CHANNEL_INDEX_UART_CONTROL,
 CHANNEL_INDEX_COLOURTAIL_LENGTH,
-CHANNEL_INDEX_COLOURTAIL_CONTROL) = range(5, 25)
+CHANNEL_INDEX_COLOURTAIL_CONTROL,
+CHANNEL_INDEX_PWM_CONF_0,
+CHANNEL_INDEX_PWM_CONF_1,
+CHANNEL_INDEX_PWM_CONF_2) = range(5, 31)
 
 EXTENSION_CONF_IO = 0x01
 EXTENSION_CONF_SPI = 0x02
@@ -160,6 +163,20 @@ class CodeBug(SerialChannelDevice):
             direction_mask = (0b11 & direction) << ext_index * 2
             self.and_mask(CHANNEL_INDEX_IO_DIRECTION_EXT, clear_mask)
             self.or_mask(CHANNEL_INDEX_IO_DIRECTION_EXT, direction_mask)
+
+    def pwm_on(self, t2_prescale, full_period, on_period):
+        """Turns on the PWM generator with the given settings."""
+        # self.set
+        pass
+
+    def pwm_freq(self, frequency):
+        """Turns on the PWM generator with the given frequency."""
+        # calculate pwm settings
+        # self.pwm_on(settings)
+        pass
+
+    def pwm_off(self):
+        pass
 
     def clear(self):
         """Clears the pixels on CodeBug.
