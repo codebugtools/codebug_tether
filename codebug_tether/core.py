@@ -165,9 +165,30 @@ class CodeBug(SerialChannelDevice):
             self.or_mask(CHANNEL_INDEX_IO_DIRECTION_EXT, direction_mask)
 
     def pwm_on(self, t2_prescale, full_period, on_period):
-        """Turns on the PWM generator with the given settings."""
-        # self.set
-        pass
+        """Turns on the PWM generator with the given settings.
+
+        :param t2_prescale: One of T2_PS_1_1, T2_PS_1_4, T2_PS_1_16
+                            Scales down the 4MHz instruction clock by
+                            1, 4 or 16.
+        :param full_period: 8-bit value - which is scaled up to 10-bits
+                            (<< 2) - to which timer 2 will count up to
+                            before resetting PWM output to 1.
+        :param on_period: 10-bit value to which timer 2 will count up to
+                          before setting PWM output to 0. Use this with
+                          full_period to control duty cycle. For
+                          example:
+
+                              # 4MHz / 16 with 50% duty cycle
+                              codebug.pwm_on(T2_PS_1_16, 0xff, 0x200)
+
+        """
+        # full period
+        self.set(CHANNEL_INDEX_PWM_CONF_0, full_period)
+        self.set(CHANNEL_INDEX_PWM_CONF_1, on_period | 0xff)
+        go_busy = 1
+        top_two_bit_on_period = (on_period >> 8) & 0b11
+        conf = go_busy << 4 | t2_prescale << 2 | top_two_bit_on_period
+        self.set(CHANNEL_INDEX_PWM_CONF_2, conf)
 
     def pwm_freq(self, frequency):
         """Turns on the PWM generator with the given frequency."""
@@ -176,7 +197,8 @@ class CodeBug(SerialChannelDevice):
         pass
 
     def pwm_off(self):
-        pass
+        go_busy_off_mask = 0xff ^ (1 << 4)
+        self.and_mask(CHANNEL_INDEX_PWM_CONF_2, go_busy_off_mask)
 
     def clear(self):
         """Clears the pixels on CodeBug.
