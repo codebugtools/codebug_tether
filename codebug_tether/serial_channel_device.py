@@ -111,7 +111,7 @@ class SerialChannelDevice():
         self.transaction(
             struct.pack('BB',
                         (CMD_SET_BULK << 5 | channel_index & 0x1f),
-                        len(values)) + bytes(values))
+                        len(values)) + bytes((values,)))
 
     def and_mask(self, channel_index, mask):
         """Returns AndPacket as bytes.
@@ -127,7 +127,7 @@ class SerialChannelDevice():
         """
         self.transaction(
             struct.pack('B', (CMD_AND << 5 | channel_index & 0x1f)) + \
-            bytes(mask))
+            bytes((mask,)))
 
     def or_mask(self, channel_index, mask):
         """Returns OrPacket as bytes.
@@ -143,7 +143,7 @@ class SerialChannelDevice():
         """
         self.transaction(
             struct.pack('B', (CMD_OR << 5 | channel_index & 0x1f)) + \
-            bytes(mask))
+            bytes((mask,)))
 
     def set_bit(self, channel_index, bit_index, state):
         """Sets a bit in a channel to state."""
@@ -189,7 +189,7 @@ class SerialChannelDevice():
             struct.pack('BBB',
                         (CMD_SET_BUFFER << 5 | buffer_index & 0x1f),
                         offset,
-                        len(values)) + bytes(values))
+                        len(values)) + bytes((values,)))
 
     def transaction(self, tx_bytes):
         """Sends a packet and waits for a ACK response."""

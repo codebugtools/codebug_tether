@@ -10,7 +10,7 @@ DEFAULT_SERIAL_PORT = '/dev/ttyACM0'
 
 IO_DIGITAL_OUTPUT = 0
 IO_DIGITAL_INPUT = 1
-IO_ANALOG_INPUT = 2
+IO_ANALOGUE_INPUT = 2
 IO_PWM_OUTPUT = 3
 
 # CHANNEL_INDEX_ROW_0 = 0
@@ -19,31 +19,30 @@ IO_PWM_OUTPUT = 3
 # CHANNEL_INDEX_ROW_3 = 3
 # CHANNEL_INDEX_ROW_4 = 4
 (CHANNEL_INDEX_OUTPUT,
-CHANNEL_INDEX_LEG_INPUT,
-CHANNEL_INDEX_BUTTON_INPUT,
-CHANNEL_INDEX_ANALOGUE_INPUT_0,
-CHANNEL_INDEX_ANALOGUE_INPUT_1,
-CHANNEL_INDEX_ANALOGUE_INPUT_2,
-CHANNEL_INDEX_IO_DIRECTION_LEGS,
-CHANNEL_INDEX_IO_DIRECTION_EXT,
-CHANNEL_INDEX_PULLUPS,
-CHANNEL_INDEX_EXT_CONF,
-CHANNEL_INDEX_SPI_RATE,
-CHANNEL_INDEX_SPI_LENGTH,
-CHANNEL_INDEX_SPI_CONTROL,
-CHANNEL_INDEX_I2C_ADDR,
-CHANNEL_INDEX_I2C_LENGTH,
-CHANNEL_INDEX_I2C_CONTROL,
-CHANNEL_INDEX_UART_RX_OFFSET,
-CHANNEL_INDEX_UART_RX_LENGTH,
-CHANNEL_INDEX_UART_TX_OFFSET,
-CHANNEL_INDEX_UART_TX_LENGTH,
-CHANNEL_INDEX_UART_CONTROL,
-CHANNEL_INDEX_COLOURTAIL_LENGTH,
-CHANNEL_INDEX_COLOURTAIL_CONTROL,
-CHANNEL_INDEX_PWM_CONF_0,
-CHANNEL_INDEX_PWM_CONF_1,
-CHANNEL_INDEX_PWM_CONF_2) = range(5, 31)
+ CHANNEL_INDEX_LEG_INPUT,
+ CHANNEL_INDEX_BUTTON_INPUT,
+ CHANNEL_INDEX_ANALOGUE_CONF,
+ CHANNEL_INDEX_ANALOGUE_INPUT,
+ CHANNEL_INDEX_IO_DIRECTION_LEGS,
+ CHANNEL_INDEX_IO_DIRECTION_EXT,
+ CHANNEL_INDEX_PULLUPS,
+ CHANNEL_INDEX_EXT_CONF,
+ CHANNEL_INDEX_SPI_RATE,
+ CHANNEL_INDEX_SPI_LENGTH,
+ CHANNEL_INDEX_SPI_CONTROL,
+ CHANNEL_INDEX_I2C_ADDR,
+ CHANNEL_INDEX_I2C_LENGTH,
+ CHANNEL_INDEX_I2C_CONTROL,
+ CHANNEL_INDEX_UART_RX_OFFSET,
+ CHANNEL_INDEX_UART_RX_LENGTH,
+ CHANNEL_INDEX_UART_TX_OFFSET,
+ CHANNEL_INDEX_UART_TX_LENGTH,
+ CHANNEL_INDEX_UART_CONTROL,
+ CHANNEL_INDEX_COLOURTAIL_LENGTH,
+ CHANNEL_INDEX_COLOURTAIL_CONTROL,
+ CHANNEL_INDEX_PWM_CONF_0,
+ CHANNEL_INDEX_PWM_CONF_1,
+ CHANNEL_INDEX_PWM_CONF_2) = range(5, 30)
 
 EXTENSION_CONF_IO = 0x01
 EXTENSION_CONF_SPI = 0x02
@@ -115,12 +114,11 @@ class CodeBug(SerialChannelDevice):
             128
 
         """
-        if leg_index == 0:
-            return self.get(CHANNEL_INDEX_ANALOGUE_INPUT_0)
-        elif leg_index == 1:
-            return self.get(CHANNEL_INDEX_ANALOGUE_INPUT_1)
-        elif leg_index == 2:
-            return self.get(CHANNEL_INDEX_ANALOGUE_INPUT_2)
+        # set which leg to read (and do the read)
+        self.set(CHANNEL_INDEX_ANALOGUE_CONF, leg_index)
+        # return the value
+        analogue_value = self.get(CHANNEL_INDEX_ANALOGUE_INPUT)
+        return struct.unpack('B', analogue_value)[0]
 
     def set_pullup(self, input_index, state):
         """Sets the state of the input pullups. Turn off to enable touch
@@ -153,9 +151,11 @@ class CodeBug(SerialChannelDevice):
 
         """
         if leg_index < 4:
-            clear_mask = 0b11 << leg_index * 2
+            clear_mask = 0xff ^ (0b11 << leg_index * 2)
             direction_mask = (0b11 & direction) << leg_index * 2
+            print("and_mask: {}".format(bin(clear_mask)))
             self.and_mask(CHANNEL_INDEX_IO_DIRECTION_LEGS, clear_mask)
+            print("or_mask: {}".format(bin(direction_mask)))
             self.or_mask(CHANNEL_INDEX_IO_DIRECTION_LEGS, direction_mask)
         else:
             ext_index = leg_index - 4
