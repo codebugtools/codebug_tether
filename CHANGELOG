@@ -5,7 +5,7 @@ v0.7.0
 ------
 - Fixed bytes error in serial_channel_device -- and/or/bulk commands
   work again.
-- Added support for analogue inputs, PWM and added music helper methods.
+- Added support for analogue inputs and PWM.
 
 v0.6.1
 ------

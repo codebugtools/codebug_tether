@@ -107,6 +107,59 @@ You can also change the direction text is written in::
     >>> bottom_to_top_msg = StringSprite('Hello CodeBug!', direction='U')
 
 
+Analogue Input
+==============
+You can read analogue inputs from all 8 of CodeBug's I/O legs/extension
+pins::
+
+    >>> import codebug_tether
+    >>> from codebug_tether import (IO_DIGITAL_INPUT,
+    ...                             IO_ANALOGUE_INPUT,
+    ...                             IO_PWM_OUTPUT,
+    ...                             IO_DIGITAL_OUTPUT)
+    ...
+    >>> codebug = codebug_tether.CodeBug()
+    >>> codebug.set_leg_io(0, IO_ANALOGUE_INPUT)
+    >>> codebug.read_analogue(0)
+    128
+
+
+PWM Output
+==========
+You can drive one synchronised PWM (Pulse Width Modulation) signal out
+of the first three legs on CodeBug. That is, the same PWM signal will
+be driven out of legs configured as PWM output::
+
+    >>> import codebug_tether
+    >>> from codebug_tether import (IO_DIGITAL_INPUT,
+    ...                             IO_ANALOGUE_INPUT,
+    ...                             IO_PWM_OUTPUT,
+    ...                             IO_DIGITAL_OUTPUT,
+    ...                             T2_PS_1_1,
+    ...                             T2_PS_1_4,
+    ...                             T2_PS_1_16)
+
+    >>> codebug = codebug_tether.CodeBug()
+    >>> # configure legs 0 and 1 to be PWM output
+    >>> codebug.set_leg_io(0, IO_PWM_OUTPUT)
+    >>> codebug.set_leg_io(1, IO_PWM_OUTPUT)
+    >>> # shortcut method to specify a frequency (the note C == 1046 Hz)
+    >>> codebug.pwm_freq(1046)
+    >>> time.sleep(2)
+    >>> codebug.pwm_off()
+
+Or you can be more specific with the duty cycle and timing::
+
+    >>> # pwm on with 1:4 prescaler and 75% duty cycle @ ~977Hz
+    >>> # Timer 2 prescale: 4Mhz clock / 4 = 1MHz timer speed
+    >>> # full_period: 255 << 2 = 1024  (timer resets at this count; PWM = 1)
+    >>> # on_period: 765 (PWM goes to zero at this count; PWM = 0)
+    >>> # therefore duty cycle here is 75%
+    >>> codebug.pwm_on(T2_PS_1_4, 255, 765)
+    >>> time.sleep(2)
+    >>> codebug.pwm_off()
+
+
 Colour Tail
 ===========
 You can control Colour Tails (WS2812's) attached to CodeBug. By default,

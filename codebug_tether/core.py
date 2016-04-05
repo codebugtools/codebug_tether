@@ -65,6 +65,10 @@ UART_BAUD_115200 = 7 << 2
 
 UART_DEFAULT_BAUD = 9600
 
+T2_PS_1_1 = 0
+T2_PS_1_4 = 1
+T2_PS_1_16 = 2
+
 
 class InvalidBaud(Exception):
     pass
@@ -184,16 +188,30 @@ class CodeBug(SerialChannelDevice):
         """
         # full period
         self.set(CHANNEL_INDEX_PWM_CONF_0, full_period)
-        self.set(CHANNEL_INDEX_PWM_CONF_1, on_period | 0xff)
+        self.set(CHANNEL_INDEX_PWM_CONF_1, on_period & 0xff)
         go_busy = 1
         top_two_bit_on_period = (on_period >> 8) & 0b11
         conf = go_busy << 4 | t2_prescale << 2 | top_two_bit_on_period
         self.set(CHANNEL_INDEX_PWM_CONF_2, conf)
 
     def pwm_freq(self, frequency):
-        """Turns on the PWM generator with the given frequency."""
+        """Turns on the PWM generator with the given frequency. For example:
+
+            >>> codebug = CodeBug()
+            >>> codebug.set_leg_io(0, IO_PWM_OUTPUT)
+            >>> codebug.pwm_freq(1046)
+            >>> time.sleep(2)
+            >>> codebug.pwm_off()
+
+        """
         # calculate pwm settings
-        # self.pwm_on(settings)
+        # 4 MHz / 16 = 250k ticks per second
+        full_period = int(250000 / frequency) - 1
+        # for 50% duty cycle: shift up by 2 then /(2 i.e. 50% duty cycle)
+        # on_period = (full_period << 2) / 2;
+        # this is quicker
+        on_period = full_period << 1
+        self.pwm_on(T2_PS_1_16, full_period, on_period)
         pass
 
     def pwm_off(self):
