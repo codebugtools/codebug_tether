@@ -5,7 +5,7 @@ The codebug_tether Python module provides classes for
 interacting with CodeBug over USB Serial.
 
 Links:
-    - `The CodeBug Website <http://codebug.openlx.org.uk>`_
+    - `The CodeBug Website <http://www.codebug.org.uk>`_
 
 Contents:
 
