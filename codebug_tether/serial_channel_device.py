@@ -97,7 +97,7 @@ class SerialChannelDevice():
         # Serial port will now contain channel data
         return self.serial_port.read(length)
 
-    def set_bulk(self, channel_index, values):
+    def set_bulk(self, channel_index, value_bytes):
         """SET BULK packet for setting multiple adjacent channel values
         in one go.
 
@@ -111,7 +111,7 @@ class SerialChannelDevice():
         self.transaction(
             struct.pack('BB',
                         (CMD_SET_BULK << 5 | channel_index & 0x1f),
-                        len(values)) + bytes((values,)))
+                        len(value_bytes)) + value_bytes)
 
     def and_mask(self, channel_index, mask):
         """Returns AndPacket as bytes.
@@ -148,9 +148,9 @@ class SerialChannelDevice():
     def set_bit(self, channel_index, bit_index, state):
         """Sets a bit in a channel to state."""
         if state:
-            self.or_mask(channel_index, bytes((1 << bit_index,)))
+            self.or_mask(channel_index, 1 << bit_index)
         else:
-            self.and_mask(channel_index, bytes((0xff ^ (1 << bit_index),)))
+            self.and_mask(channel_index, 0xff ^ (1 << bit_index))
 
     def get_bit(self, channel_index, bit_index):
         """Returns a bit from a channel."""
@@ -175,7 +175,7 @@ class SerialChannelDevice():
         # Serial port will now contain buffer data
         return self.serial_port.read(length)
 
-    def set_buffer(self, buffer_index, values, offset=0):
+    def set_buffer(self, buffer_index, value_bytes, offset=0):
         """SET BUFFER packet for setting whole buffers.
 
             +--------+--------------+--------+--------+------------+
@@ -189,7 +189,7 @@ class SerialChannelDevice():
             struct.pack('BBB',
                         (CMD_SET_BUFFER << 5 | buffer_index & 0x1f),
                         offset,
-                        len(values)) + bytes((values,)))
+                        len(value_bytes)) + value_bytes)
 
     def transaction(self, tx_bytes):
         """Sends a packet and waits for a ACK response."""

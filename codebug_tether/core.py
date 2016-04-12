@@ -157,9 +157,7 @@ class CodeBug(SerialChannelDevice):
         if leg_index < 4:
             clear_mask = 0xff ^ (0b11 << leg_index * 2)
             direction_mask = (0b11 & direction) << leg_index * 2
-            print("and_mask: {}".format(bin(clear_mask)))
             self.and_mask(CHANNEL_INDEX_IO_DIRECTION_LEGS, clear_mask)
-            print("or_mask: {}".format(bin(direction_mask)))
             self.or_mask(CHANNEL_INDEX_IO_DIRECTION_LEGS, direction_mask)
         else:
             ext_index = leg_index - 4
@@ -225,7 +223,7 @@ class CodeBug(SerialChannelDevice):
             >>> codebug.clear()
 
         """
-        self.set_bulk(0, [0]*5)
+        self.set_bulk(0, bytes([0]*5))
 
     def fill(self):
         """Sets all pixels on.
@@ -234,7 +232,7 @@ class CodeBug(SerialChannelDevice):
             >>> codebug.fill()
 
         """
-        self.set_bulk(0, [0x1f]*5)
+        self.set_bulk(0, bytes([0x1f]*5))
 
     def set_row(self, row, val):
         """Sets a row of PIXELs on CodeBug.
@@ -318,7 +316,8 @@ class CodeBug(SerialChannelDevice):
         if clear_first:
             self.set_bulk(0, bytes(cb_rows))
         else:
-            self.or_mask_bulk(0, bytes(cb_rows))
+            for i, row in enumerate(cb_rows):
+                self.or_mask(i, bytes(row))
 
     def config_extension_io(self):
         self.set(CHANNEL_INDEX_EXT_CONF, EXTENSION_CONF_IO)
@@ -362,7 +361,7 @@ class CodeBug(SerialChannelDevice):
         go = 0x01
         control = spi_mode | input_sample_middle | cs_idle_high | go
         # put data into the buffer
-        self.set_buffer(0, list(data))
+        self.set_buffer(0, bytes(list(data)))
         # set the length and control channels in one go
         self.set_bulk(CHANNEL_INDEX_SPI_LENGTH, bytes([len(data), control]))
         # return data from buffer
@@ -427,10 +426,10 @@ class CodeBug(SerialChannelDevice):
             # print("length", msg.length)
             # print("control", bin(msg.control))
             # print()
-            self.set_buffer(0, msg.data)
+            self.set_buffer(0, bytes(msg.data))
             # set the i2c address, length and control all in one go
             self.set_bulk(CHANNEL_INDEX_I2C_ADDR,
-                          [msg.address, msg.length, msg.control])
+                          bytes([msg.address, msg.length, msg.control]))
             # if reading, add data to rx_buffer
             if msg.control & I2C_CONTROL_READ_NOT_WRITE:
                 values = struct.unpack('B'*msg.length,

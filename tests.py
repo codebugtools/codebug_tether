@@ -7,7 +7,7 @@ import time
 import serial
 import struct
 import unittest
-from codebug_tether.core import (CodeBug, CHANNEL_INDEX_IO_DIRECTION)
+from codebug_tether.core import CodeBug
 from codebug_tether.sprites import (Sprite, StringSprite)
 
 
@@ -28,44 +28,48 @@ class TestCodeBug(unittest.TestCase):
         num_outputs = 8
         for i in range(num_outputs):
             self.codebug.set_leg_io(i, 0)  # set to output
+        for i in range(num_outputs):
             self.codebug.set_output(i, 1)  # set to ON
 
         # check that they are all on
         for i in range(num_outputs):
-            self.assertEqual(self.codebug.get_output(i), 1)
+            self.assertEqual(
+                self.codebug.get_output(i),
+                1,
+                'self.codebug.get_output({}) != 1'.format(i))
 
         # then turn off again
         for i in range(num_outputs):
             self.codebug.set_output(i, 0)  # set to OFF
 
-    def test_set_leg_io(self):
-        self.codebug.set_leg_io(0, 0)
-        self.codebug.set_leg_io(1, 1)
-        self.codebug.set_leg_io(2, 0)
-        self.codebug.set_leg_io(3, 1)
-        self.codebug.set_leg_io(4, 0)
-        self.codebug.set_leg_io(5, 1)
-        self.codebug.set_leg_io(6, 0)
-        self.codebug.set_leg_io(7, 1)
-        value = struct.unpack('B',
-                              self.codebug.get(CHANNEL_INDEX_IO_DIRECTION))[0]
-        self.assertEqual(value, 0xAA)
+    # def test_set_leg_io(self):
+    #     self.codebug.set_leg_io(0, 0)
+    #     self.codebug.set_leg_io(1, 1)
+    #     self.codebug.set_leg_io(2, 0)
+    #     self.codebug.set_leg_io(3, 1)
+    #     self.codebug.set_leg_io(4, 0)
+    #     self.codebug.set_leg_io(5, 1)
+    #     self.codebug.set_leg_io(6, 0)
+    #     self.codebug.set_leg_io(7, 1)
+    #     value = struct.unpack('B',
+    #                           self.codebug.get(CHANNEL_INDEX_IO_DIRECTION))[0]
+    #     self.assertEqual(value, 0xAA)
 
-        self.codebug.set_leg_io(0, 1)
-        self.codebug.set_leg_io(1, 0)
-        self.codebug.set_leg_io(2, 1)
-        self.codebug.set_leg_io(3, 0)
-        self.codebug.set_leg_io(4, 1)
-        self.codebug.set_leg_io(5, 0)
-        self.codebug.set_leg_io(6, 1)
-        self.codebug.set_leg_io(7, 0)
-        value = struct.unpack('B',
-                              self.codebug.get(CHANNEL_INDEX_IO_DIRECTION))[0]
-        self.assertEqual(value, 0x55)
+    #     self.codebug.set_leg_io(0, 1)
+    #     self.codebug.set_leg_io(1, 0)
+    #     self.codebug.set_leg_io(2, 1)
+    #     self.codebug.set_leg_io(3, 0)
+    #     self.codebug.set_leg_io(4, 1)
+    #     self.codebug.set_leg_io(5, 0)
+    #     self.codebug.set_leg_io(6, 1)
+    #     self.codebug.set_leg_io(7, 0)
+    #     value = struct.unpack('B',
+    #                           self.codebug.get(CHANNEL_INDEX_IO_DIRECTION))[0]
+    #     self.assertEqual(value, 0x55)
 
-        # safely back to inputs
-        for i in range(7):
-            self.codebug.set_leg_io(i, 1)
+    #     # safely back to inputs
+    #     for i in range(7):
+    #         self.codebug.set_leg_io(i, 1)
 
     def test_clear(self):
         self.codebug.clear()
@@ -82,7 +86,7 @@ class TestCodeBug(unittest.TestCase):
 
     def test_get_row(self):
         for test_value in (0x0A, 0x15):
-            self.codebug.set_bulk(0, (test_value,)*5)
+            self.codebug.set_bulk(0, bytes([test_value]*5))
             for i in range(5):
                 self.assertEqual(self.codebug.get_row(i), test_value)
         self.codebug.clear()
@@ -101,11 +105,11 @@ class TestCodeBug(unittest.TestCase):
         self.codebug.clear()
 
     def test_get_col(self):
-        self.codebug.set_bulk(0, (0x00, 0x1F, 0x00, 0x1F, 0x00))
+        self.codebug.set_bulk(0, bytes((0x00, 0x1F, 0x00, 0x1F, 0x00)))
         for i in range(5):
             self.assertEqual(self.codebug.get_col(i), 0x0A)
         self.codebug.clear()
-        self.codebug.set_bulk(0, (0x1F, 0x00, 0x1F, 0x00, 0x1F))
+        self.codebug.set_bulk(0, bytes((0x1F, 0x00, 0x1F, 0x00, 0x1F)))
         for i in range(5):
             self.assertEqual(self.codebug.get_col(i), 0x15)
         self.codebug.clear()
@@ -130,10 +134,10 @@ class TestCodeBug(unittest.TestCase):
 
     def test_get_set_buffer(self):
         v = bytes(range(255))
-        self.codebug.set_buffer(0, v)
+        self.codebug.set_buffer(0, bytes(v))
         self.assertEqual(self.codebug.get_buffer(0, len(v)), v)
         v = bytes(range(100))
-        self.codebug.set_buffer(0, v, 100)
+        self.codebug.set_buffer(0, bytes(v), 100)
         self.assertEqual(self.codebug.get_buffer(0, 255),
                          bytes(range(100))+bytes(range(100))+bytes(range(100+100, 255)))
         self.assertEqual(self.codebug.get_buffer(0, 101, 100),
