@@ -42,7 +42,9 @@ IO_PWM_OUTPUT = 3
  CHANNEL_INDEX_COLOURTAIL_CONTROL,
  CHANNEL_INDEX_PWM_CONF_0,
  CHANNEL_INDEX_PWM_CONF_1,
- CHANNEL_INDEX_PWM_CONF_2) = range(5, 30)
+ CHANNEL_INDEX_PWM_CONF_2,
+ CHANNEL_INDEX_SERVO_PULSE_LENGTH,
+ CHANNEL_INDEX_SERVO_CONF) = range(5, 32)
 
 EXTENSION_CONF_IO = 0x01
 EXTENSION_CONF_SPI = 0x02
@@ -215,6 +217,16 @@ class CodeBug(SerialChannelDevice):
     def pwm_off(self):
         go_busy_off_mask = 0xff ^ (1 << 4)
         self.and_mask(CHANNEL_INDEX_PWM_CONF_2, go_busy_off_mask)
+
+    def servo_set(self, servo_index, pulse_length):
+        pulse_length_msb = 0xff & (pulse_length >> 8)
+        pulse_length_lsb = 0xff & pulse_length
+        conf_msb = ((servo_index & 0xf) << 4) | 0x01
+        conf_lsb = ((servo_index & 0xf) << 4) | 0x00
+        self.set_bulk(CHANNEL_INDEX_SERVO_PULSE_LENGTH,
+                      [pulse_length_msb, conf_msb])
+        self.set_bulk(CHANNEL_INDEX_SERVO_PULSE_LENGTH,
+                      [pulse_length_lsb, conf_lsb])
 
     def clear(self):
         """Clears the pixels on CodeBug.
