@@ -215,6 +215,7 @@ class CodeBug(SerialChannelDevice):
         pass
 
     def pwm_off(self):
+        """Turns off the PWM generator."""
         go_busy_off_mask = 0xff ^ (1 << 4)
         self.and_mask(CHANNEL_INDEX_PWM_CONF_2, go_busy_off_mask)
 
@@ -224,9 +225,9 @@ class CodeBug(SerialChannelDevice):
         conf_msb = ((servo_index & 0xf) << 4) | 0x01
         conf_lsb = ((servo_index & 0xf) << 4) | 0x00
         self.set_bulk(CHANNEL_INDEX_SERVO_PULSE_LENGTH,
-                      [pulse_length_msb, conf_msb])
+                      bytes([pulse_length_msb, conf_msb]))
         self.set_bulk(CHANNEL_INDEX_SERVO_PULSE_LENGTH,
-                      [pulse_length_lsb, conf_lsb])
+                      bytes([pulse_length_lsb, conf_lsb]))
 
     def clear(self):
         """Clears the pixels on CodeBug.
