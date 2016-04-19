@@ -220,6 +220,9 @@ class CodeBug(SerialChannelDevice):
         self.and_mask(CHANNEL_INDEX_PWM_CONF_2, go_busy_off_mask)
 
     def servo_set(self, servo_index, pulse_length):
+        """Set the servo at servo_index to pulse_length. Make sure that
+        the leg is configured as IO_DIGITAL_OUTPUT (0).
+        """
         pulse_length_msb = 0xff & (pulse_length >> 8)
         pulse_length_lsb = 0xff & pulse_length
         conf_msb = ((servo_index & 0xf) << 4) | 0x01
