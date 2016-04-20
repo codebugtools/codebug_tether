@@ -85,6 +85,6 @@ class CodeBugColourTail():
                           for pixel in self.pixel_buffer[:PIXEL_BUFFER_SIZE]
                           for value in (pixel.green, pixel.red, pixel.blue)]
         control = COLOURTAIL_CONTROL_GO_BUSY
-        self.codebug.set_buffer(0, codebug_buffer)
+        self.codebug.set_buffer(0, bytes(codebug_buffer))
         self.codebug.set_bulk(CHANNEL_INDEX_COLOURTAIL_LENGTH,
-                              (len(self.pixel_buffer), control))
+                              bytes((len(self.pixel_buffer), control)))
