@@ -5,4 +5,5 @@ from codebug_tether.core import (CodeBug,
                                  IO_PWM_OUTPUT,
                                  T2_PS_1_1,
                                  T2_PS_1_4,
-                                 T2_PS_1_16)
+                                 T2_PS_1_16,
+                                 scale)

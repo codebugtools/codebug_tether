@@ -172,7 +172,7 @@ class CodeBug(SerialChannelDevice):
         """Turns on the PWM generator with the given settings.
 
         :param t2_prescale: One of T2_PS_1_1, T2_PS_1_4, T2_PS_1_16
-                            Scales down the 4MHz instruction clock by
+                            Scales down the 12MHz instruction clock by
                             1, 4 or 16.
         :param full_period: 8-bit value - which is scaled up to 10-bits
                             (<< 2) - to which timer 2 will count up to
@@ -182,7 +182,7 @@ class CodeBug(SerialChannelDevice):
                           full_period to control duty cycle. For
                           example:
 
-                              # 4MHz / 16 with 50% duty cycle
+                              # 12MHz / 16 with 50% duty cycle
                               codebug.pwm_on(T2_PS_1_16, 0xff, 0x200)
 
         """
@@ -205,14 +205,13 @@ class CodeBug(SerialChannelDevice):
 
         """
         # calculate pwm settings
-        # 4 MHz / 16 = 250k ticks per second
-        full_period = int(250000 / frequency) - 1
+        # 12MHz / 16 = 750k ticks per second
+        full_period = int(750000 / frequency) - 1
         # for 50% duty cycle: shift up by 2 then /(2 i.e. 50% duty cycle)
         # on_period = (full_period << 2) / 2;
         # this is quicker
         on_period = full_period << 1
         self.pwm_on(T2_PS_1_16, full_period, on_period)
-        pass
 
     def pwm_off(self):
         """Turns off the PWM generator."""
@@ -559,3 +558,19 @@ class CodeBug(SerialChannelDevice):
     def uart_rx_get_buffer(self, length, offset=0):
         """Returns data bytes from UART buffer."""
         return self.get_buffer(UART_RX_BUFFER_INDEX, length, offset)
+
+
+def scale(x, from_low, from_high, to_low, to_high):
+    # Hardware can only do 16bit maths
+    def limit(v):
+        max_value = 0x7fff
+        min_value = -0x8000
+        return max(min_value, min(max_value, v))
+    x, from_low, from_high, to_low, to_high = map(
+        limit, (x, from_low, from_high, to_low, to_high))
+    # do the scale
+    from_delta = from_high - from_low
+    x_offset = x - from_low
+    to_delta = to_high - to_low
+    new_x = int((x_offset * to_delta) / from_delta)
+    return to_low + new_x

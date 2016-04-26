@@ -160,6 +160,68 @@ Or you can be more specific with the duty cycle and timing::
     >>> codebug.pwm_off()
 
 
+Servos
+======
+It is possible to drive up to eight servos from CodeBug. Servos
+typically operate by sending them a PWM (Pulse Width Modulation) signal
+with a 20ms period and a 1-2ms duty cycle which controls the rotation
+angle of the servo. For example::
+
+     Pulse Length
+      <-1-2ms->
+    1+---------+
+     |         |
+    0+         +--------------------------------------+
+      <------------------20ms (50Hz)----------------->
+                         PWM Period
+
+A duty cycle of 1ms might correspond to 0° rotation and a duty cycle of
+2ms might correspond to 180° rotation. Although the precise values may
+differ depending on the type of servo.
+
+In order to drive servos from CodeBug you can call the `servo_set()`
+method which takes the servo index (which leg you are driving the
+servo from) and the the pulse length specified in N 0.5μs. For example::
+
+    >>> import codebug_tether
+    >>> from codebug_tether import (IO_DIGITAL_OUTPUT, scale)
+
+    >>> # init CodeBug and configure leg 0 to be digital output
+    >>> codebug = codebug_tether.CodeBug()
+    >>> codebug.set_leg_io(0, IO_DIGITAL_OUTPUT)
+
+    >>> # set servo on leg 0 with pulse length of 1ms (2000 * 0.5μs)
+    >>> codebug.servo_set(0, 2000)
+
+    >>> # stop driving the servo on leg 0
+    >>> codebug.servo_set(0, 0)
+
+You can use the scale function to easily calculate the required pulse
+length value like so::
+
+    >>> import codebug_tether
+    >>> from codebug_tether import (IO_DIGITAL_OUTPUT, scale)
+
+    >>> # scale 50 in the range 0-100 to the range 0-255
+    >>> scale(50, 0, 100, 0, 255)
+    127
+
+    >>> # scale 10 in the range 0-30 to the range 100-400
+    >>> scale(10, 0, 30, 100, 400)
+    200
+
+    >>> # scale 90° in the range 0-180° to the range 2000-4000 * 0.5μs
+    >>> scale(90, 0, 180, 2000, 4000)
+    3000
+
+    >>> # init CodeBug and configure leg 0 to be digital output
+    >>> codebug = codebug_tether.CodeBug()
+    >>> codebug.set_leg_io(0, IO_DIGITAL_OUTPUT)
+
+    >>> # drive the servo to be at 90 degrees
+    >>> codebug.servo_set(0, scale(90, 0, 180, 2000, 4000))
+
+
 Colour Tail
 ===========
 You can control Colour Tails (WS2812's) attached to CodeBug. By default,
