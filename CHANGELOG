@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+v0.7.4
+------
+- Fixed a bug with io_pwm() running three times faster than it should.
+  Fixes #15.
+
 v0.7.3
 ------
 - Fixed a bug with colourtail timing issue in the firmware.
