@@ -1,11 +1,14 @@
 Change Log
 ==========
 
+v0.8.0
+------
+- Added servo support.
+
 v0.7.4
 ------
 - Fixed a bug with io_pwm() running three times faster than it should.
   Fixes #15.
-- Added servo support.
 
 v0.7.3
 ------
