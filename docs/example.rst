@@ -164,8 +164,8 @@ Servos
 ======
 It is possible to drive up to eight servos from CodeBug. Servos
 typically operate by sending them a PWM (Pulse Width Modulation) signal
-with a 20ms period and a 1-2ms duty cycle which controls the rotation
-angle of the servo. For example::
+with a 20ms period and a 1-2ms duty cycle which controls the angle of
+the servo. For example::
 
      Pulse Length
       <-1-2ms->
@@ -175,9 +175,9 @@ angle of the servo. For example::
       <------------------20ms (50Hz)----------------->
                          PWM Period
 
-A duty cycle of 1ms might correspond to 0° rotation and a duty cycle of
-2ms might correspond to 180° rotation. Although the precise values may
-differ depending on the type of servo.
+A duty cycle of 1ms will typically correspond to 0° rotation and a duty
+cycle of 2ms will typically correspond to 180° rotation. Although the
+precise values may differ depending on the type of servo.
 
 In order to drive servos from CodeBug you can call the `servo_set()`
 method which takes the servo index (which leg you are driving the
