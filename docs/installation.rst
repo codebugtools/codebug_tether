@@ -1,85 +1,134 @@
 ############
 Installation
 ############
-You can use the ``codebug_tether`` Python 3 API by either:
-
-* Installing with ``pip``
-* Copying the ``codebug_tether`` module into your project directory.
-
-CodeBug Tether depends on pyserial.
-
-It is reccomended that you install using virtual environments.
-
 
 Setting up CodeBug
-------------------
-In order to communicate with CodeBug over Serial USB you need to program CodeBug with
-``codebug_tether.cbg`` (|firmwaredownload|).
-To do this, plug in CodeBug via USB while holding button A --- it should
-appear as a USB drive --- then copy onto it the ``codebug_tether.cbg`` file.
+==================
+In order to use CodeBug with codebug_tether you need to program CodeBug
+with ``codebug_tether.cbg`` (|firmwaredownload|).
+
+To do this, hold down button A and plug in CodeBug via USB --- it should
+appear as a USB drive --- then copy the ``codebug_tether.cbg`` file onto it.
 CodeBug is now ready to be used via serial USB. Press button B to exit
 programming mode.
 
-When CodeBug is connected to a computer via USB is should now appear as a
-serial device (``/dev/ttyACM0`` on Linux).
+.. note:: When CodeBug is connected to a computer via USB is should now
+          appear as a serial device. To reprogram CodeBug: hold down
+          button A and (re)plug it into a USB port.
 
 
+Install codebug_tether on Windows
+=================================
+.. note:: These instructions are based on `The Hitchhikers Guide to Python: Installing Python on Windows <http://docs.python-guide.org/en/latest/starting/install/win/>`_
 
-Installing with ``pip``
------------------------
-.. warning:: Consider using virtual environments.
+Install Python
+--------------
+Download and install the latest verson of Python 3 from `here <https://www.python.org/downloads/windows/>`_.
+Make sure you tick the *Add Python 3 to environment variables* checkbox.
 
-Make sure ``pip`` is installed::
+Install codebug_tether
+----------------------
+To install codebug_tether, open up a command prompt and type::
 
-    sudo apt-get install python3-pip
+    pip install codebug_tether
 
-Install ``codebug_tether`` using ``pip``::
+To test it has worked, plug in CodeBug and open a Python shell by typing::
 
-    sudo pip-3.2 install pyserial codebug_tether
+    python
 
+Your command prompt should have changed to::
 
-Installing with ``pip`` (with Virtual Environments)
----------------------------------------------------
-.. note :: Generally, it's best to install packages into a
-           `virtual environment <http://docs.python-guide.org/en/latest/dev/virtualenvs/>`_
-           when using ``pip`` so that they remain project specific.
+    >>> _
 
-Install ``virtualenv``::
+Now type::
 
-    sudo pip-3.2 install virtualenv
-
-Move into your project and create the virtual environment::
-
-    cd my_project_directory/
-    virtualenv-3.2 venv
-
-Activate the virtual environment::
-
-    source venv/bin/activate
-
-You should notice that your command prompt has changed. ``pip`` will now
-install all packages into the virtual environment instead of littering
-your system files::
-
-    pip install pyserial codebug_tether
-
-Now you can work on your application with ``codebug_tether``. Once
-you're done, deactivate the virtual environment::
-
-    deactivate
-
-You will not be able to use packages installed in the virtual environment
-until you activate it again (`source venv/bin/activate`).
-
-
-Using ``codebug_tether`` without installing
------------------------------------------------
-You may want to use ``codebug_tether`` without installing anything at
-all. You can just download and include the ``codebug_tether`` package
-in your project and start using it. The quickest way to do this is::
-
-    git clone https://github.com/codebugtools/codebug_tether.git
-    cp -r codebug_tether/codebug_tether myproject/
-    cd myproject/
-    python3
     >>> import codebug_tether
+    >>> codebug = codebug_tether.CodeBug()
+    >>> codebug.set_pixel(2, 2, 1)
+
+The middle pixel on your CodeBug should light up.
+
+
+Install codebug_tether on OSX
+=============================
+.. note:: These instructions are based on `The Hitchhikers Guide to Python: Installing Python on Mac OS X <http://docs.python-guide.org/en/latest/starting/install/osx/>`_
+
+Install Python
+--------------
+Download and install `Xcode <https://developer.apple.com/xcode/download/>`_ (if you haven't already) and then enable the command line tools by running (in a terminal)::
+
+    xcode-select --install
+
+Now install Homebrew (a package manager for OSX)::
+
+    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+
+The script will explain what changes it will make and prompt you before the installation begins. Once you’ve installed Homebrew, insert the Homebrew directory at the top of your **PATH** environment variable. You can do this by adding the following line at the bottom of your ~/.profile file::
+
+    export PATH=/usr/local/bin:/usr/local/sbin:$PATH
+
+Now, we can install Python 3::
+
+    brew install python3
+
+This will take a minute or two.
+
+Install codebug_tether
+----------------------
+To install codebug_tether, open up a terminal and type::
+
+    pip install codebug_tether
+
+To test it has worked, plug in CodeBug and open a Python shell by typing::
+
+    python
+
+Your command prompt should have changed to::
+
+    >>> _
+
+Now type::
+
+    >>> import codebug_tether
+    >>> codebug = codebug_tether.CodeBug()
+    >>> codebug.set_pixel(2, 2, 1)
+
+The middle pixel on your CodeBug should light up.
+
+
+Install codebug_tether on Linux
+===============================
+Install Python
+--------------
+Python should already be installed but for good measure::
+
+    sudo apt-get install python3
+
+To install pip, securely download `get-pip.py <https://bootstrap.pypa.io/get-pip.py>`_.
+
+Then run the following::
+
+    python get-pip.py
+
+
+Install codebug_tether
+----------------------
+To install codebug_tether, open up a terminal and type::
+
+    pip install codebug_tether
+
+To test it has worked, plug in CodeBug and open a Python shell by typing::
+
+    python
+
+Your command prompt should have changed to::
+
+    >>> _
+
+Now type::
+
+    >>> import codebug_tether
+    >>> codebug = codebug_tether.CodeBug()
+    >>> codebug.set_pixel(2, 2, 1)
+
+The middle pixel on your CodeBug should light up.

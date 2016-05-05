@@ -1,6 +1,20 @@
 Change Log
 ==========
 
+v0.8.4
+------
+- Default serial port is set to blank on error and added 'requires' to
+  setup.py
+- Added new installation docs.
+
+v0.8.3
+------
+- Nicer error message for Windows/OSX.
+
+v0.8.2
+------
+- More robust OS and serial port check.
+
 v0.8.1
 ------
 - Figures out default serial port for Raspberry Pi 2 and below,

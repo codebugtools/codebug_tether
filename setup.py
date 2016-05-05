@@ -27,6 +27,7 @@ setup(
     license='GPLv3+',
     url='https://github.com/codebugtools/codebug_tether',
     packages=['codebug_tether'],
+    requires=['pyserial'],
     long_description=open('README.md').read() + open('CHANGELOG').read(),
     classifiers=[
         "License :: OSI Approved :: GNU Affero General Public License v3 or "
