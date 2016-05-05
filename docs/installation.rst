@@ -32,15 +32,7 @@ To install codebug_tether, open up a command prompt and type::
 
     pip install codebug_tether
 
-To test it has worked, plug in CodeBug and open a Python shell by typing::
-
-    python
-
-Your command prompt should have changed to::
-
-    >>> _
-
-Now type::
+Restart Windows then open IDLE. Plug in CodeBug and type::
 
     >>> import codebug_tether
     >>> codebug = codebug_tether.CodeBug()
