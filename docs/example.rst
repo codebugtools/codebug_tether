@@ -38,8 +38,8 @@ Basics
 
 
 .. note:: You can specify a different serial device for CodeBug by passing
-          the class a string. For example, OSX users might use:
-          ``codebug = codebug_tether.CodeBug('/dev/tty.USBmodem')``.
+          the class a string. For example:
+          ``codebug = codebug_tether.CodeBug(serial_port='/dev/tty.USBmodem')``.
 
 
 Sprites

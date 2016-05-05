@@ -6,7 +6,27 @@ from codebug_tether.i2c import *
 from codebug_tether.serial_channel_device import SerialChannelDevice
 
 
-DEFAULT_SERIAL_PORT = '/dev/ttyACM0'
+# setup default serial port (different on MacOS and >=Raspberry Pi 3)
+if os.uname().sysname == 'Darwin':
+    # OSX
+    DEFAULT_SERIAL_PORT = '/dev/tty.USBmodem'
+else:
+    # assume we're on Raspberry Pi/Linux
+    def get_rpi_revision():
+        """Returns the version number from the revision line."""
+        for line in open("/proc/cpuinfo"):
+            if "Revision" in line:
+                import re
+                return re.sub('Revision\t: ([a-z0-9]+)\n', r'\1', line)
+
+    rpi_revision = get_rpi_revision()
+    if rpi_revision and rpi_revision != 'Beta' and int('0x'+rpi_revision, 16) >= 0xa02082:
+        # RPi 3 and above
+        DEFAULT_SERIAL_PORT = '/dev/ttyS0'
+    else:
+        # RPi 2 and below
+        DEFAULT_SERIAL_PORT = '/dev/ttyACM0'
+
 
 IO_DIGITAL_OUTPUT = 0
 IO_DIGITAL_INPUT = 1

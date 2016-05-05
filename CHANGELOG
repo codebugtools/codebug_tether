@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+v0.8.1
+------
+- Figures out default serial port for Raspberry Pi 2 and below,
+  Raspberry Pi 3 and above and MacOS.
+
 v0.8.0
 ------
 - Added servo support.
