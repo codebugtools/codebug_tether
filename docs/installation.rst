@@ -23,7 +23,7 @@ Install codebug_tether on Windows
 
 Install Python
 --------------
-Download and install the latest verson of Python 3 from `here <https://www.python.org/downloads/windows/>`_.
+Download and install the latest version of Python 3 from `here <https://www.python.org/downloads/windows/>`_.
 Make sure you tick the *Add Python 3 to environment variables* checkbox.
 
 Install codebug_tether
