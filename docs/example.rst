@@ -1,6 +1,9 @@
+.. _examples-label:
+
 ########
 Examples
 ########
+
 
 Basics
 ======

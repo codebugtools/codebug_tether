@@ -16,7 +16,6 @@ programming mode.
           appear as a serial device. To reprogram CodeBug: hold down
           button A and (re)plug it into a USB port.
 
-
 Install codebug_tether on Windows
 =================================
 .. note:: These instructions are based on `The Hitchhikers Guide to Python: Installing Python on Windows <http://docs.python-guide.org/en/latest/starting/install/win/>`_
@@ -32,13 +31,15 @@ To install codebug_tether, open up a command prompt and type::
 
     pip install codebug_tether
 
-Restart Windows then open IDLE. Plug in CodeBug and type::
+Restart Windows and then open IDLE. Plug in CodeBug and type::
 
     >>> import codebug_tether
     >>> codebug = codebug_tether.CodeBug()
     >>> codebug.set_pixel(2, 2, 1)
 
 The middle pixel on your CodeBug should light up.
+
+See :ref:`examples-label` for more ways to use codebug_tether.
 
 
 Install codebug_tether on OSX
@@ -87,6 +88,8 @@ Now type::
 
 The middle pixel on your CodeBug should light up.
 
+See :ref:`examples-label` for more ways to use codebug_tether.
+
 
 Install codebug_tether on Linux
 ===============================
@@ -124,3 +127,5 @@ Now type::
     >>> codebug.set_pixel(2, 2, 1)
 
 The middle pixel on your CodeBug should light up.
+
+See :ref:`examples-label` for more ways to use codebug_tether.
