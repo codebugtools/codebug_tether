@@ -6,6 +6,7 @@ v0.8.4
 - Default serial port is set to blank on error and added 'requires' to
   setup.py
 - Added new installation docs.
+- Fixed firmware bug with legs 0 and 1.
 
 v0.8.3
 ------
