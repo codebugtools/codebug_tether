@@ -93,6 +93,18 @@ See :ref:`examples-label` for more ways to use codebug_tether.
 
 Install codebug_tether on Linux
 ===============================
+Disable Serial Port Login Shell
+-------------------------------
+CodeBug uses the serial port which is configured to output the login
+shell by default. You must disable this before CodeBug will work. To do
+so, run:
+
+    sudo raspi-config
+
+Navigate to `Advanced Options` > `Serial`, disable the login shell and
+then reboot.
+
+
 Install Python
 --------------
 Python should already be installed but for good measure::
