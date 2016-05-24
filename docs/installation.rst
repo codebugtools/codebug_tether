@@ -97,7 +97,7 @@ Disable Serial Port Login Shell
 -------------------------------
 CodeBug uses the serial port which is configured to output the login
 shell by default. You must disable this before CodeBug will work. To do
-so, run:
+so, run::
 
     sudo raspi-config
 
