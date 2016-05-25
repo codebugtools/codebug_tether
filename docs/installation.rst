@@ -107,26 +107,28 @@ then reboot.
 
 Install Python
 --------------
-Python should already be installed but for good measure::
+Python 3 and pip should already be installed but for good measure::
 
+    sudo apt-get update
+    sudo apt-get upgrade
     sudo apt-get install python3
 
-To install pip, securely download `get-pip.py <https://bootstrap.pypa.io/get-pip.py>`_.
+If pip isn't installed you can securely download it from here `get-pip.py <https://bootstrap.pypa.io/get-pip.py>`_.
 
 Then run the following::
 
-    python get-pip.py
+    sudo python3 get-pip.py
 
 
 Install codebug_tether
 ----------------------
 To install codebug_tether, open up a terminal and type::
 
-    pip install codebug_tether
+    sudo pip3 install codebug_tether
 
 To test it has worked, plug in CodeBug and open a Python shell by typing::
 
-    python
+    python3
 
 Your command prompt should have changed to::
 
