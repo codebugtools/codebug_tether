@@ -103,18 +103,18 @@ To install pip, securely download `get-pip.py <https://bootstrap.pypa.io/get-pip
 
 Then run the following::
 
-    python get-pip.py
+    sudo python3 get-pip.py
 
 
 Install codebug_tether
 ----------------------
 To install codebug_tether, open up a terminal and type::
 
-    pip install codebug_tether
+    pip3 install codebug_tether
 
 To test it has worked, plug in CodeBug and open a Python shell by typing::
 
-    python
+    python3
 
 Your command prompt should have changed to::
 
