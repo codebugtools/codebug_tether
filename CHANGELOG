@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+v0.8.6
+------
+- Fixed bug with vertical sprites not allocating the correct amount of
+  sprite space.
+
 v0.8.5
 ------
 - Fixed timing issue with servos and USB response.
