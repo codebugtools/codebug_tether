@@ -1,6 +1,11 @@
 Change Log
 ==========
 
+v0.9.0
+------
+- Added `scroll_sprite` method.
+- Moved platform checking code to its own module.
+
 v0.8.6
 ------
 - Fixed bug with vertical sprites not allocating the correct amount of
