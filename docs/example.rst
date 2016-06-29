@@ -69,6 +69,8 @@ You can use the sprites library to quickly draw things on CodeBug's display.
     >>> codebug.draw_sprite(0, 0, message)
     >>> # move it along
     >>> codebug.draw_sprite(-2, 0, message)
+    >>> # scroll a sprite
+    >>> codebug.scroll_sprite(message)
 
 You can do some more interesting things with Sprites::
 
