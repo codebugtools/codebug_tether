@@ -93,27 +93,15 @@ See :ref:`examples-label` for more ways to use codebug_tether.
 
 Install codebug_tether on Linux
 ===============================
-Disable Serial Port Login Shell
--------------------------------
-CodeBug uses the serial port which is configured to output the login
-shell by default. You must disable this before CodeBug will work. To do
-so, run::
-
-    sudo raspi-config
-
-Navigate to `Advanced Options` > `Serial`, disable the login shell and
-then reboot.
-
-
 Install Python
 --------------
-Python 3 and pip should already be installed but for good measure::
+Python 3 and pip should already be installed but for good measure run::
 
     sudo apt-get update
     sudo apt-get upgrade
     sudo apt-get install python3
 
-If pip isn't installed you can securely download it from here `get-pip.py <https://bootstrap.pypa.io/get-pip.py>`_.
+If `pip` isn't installed you can securely download it from here `get-pip.py <https://bootstrap.pypa.io/get-pip.py>`_.
 
 Then run the following::
 
@@ -143,3 +131,16 @@ Now type::
 The middle pixel on your CodeBug should light up.
 
 See :ref:`examples-label` for more ways to use codebug_tether.
+
+
+Troubleshooting
+===============
+Raspberry Pi - Disable Serial Port Login Shell
+----------------------------------------------
+CodeBug uses the serial port which is configured to output the login
+shell by default (on older Raspberry Pi models). You must disable this before CodeBug will work. To do so, run::
+
+    sudo raspi-config
+
+Navigate to `Advanced Options` > `Serial`, disable the login shell and
+then reboot.
