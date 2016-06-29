@@ -137,10 +137,8 @@ Troubleshooting
 ===============
 Raspberry Pi - Disable Serial Port Login Shell
 ----------------------------------------------
-CodeBug uses the serial port which is configured to output the login
-shell by default (on older Raspberry Pi models). You must disable this before CodeBug will work. To do so, run::
+CodeBug uses the USB serial port which (on older Raspberry Pi models) is configured to output the login shell by default. You must disable this before CodeBug will work. To do so, run::
 
     sudo raspi-config
 
-Navigate to `Advanced Options` > `Serial`, disable the login shell and
-then reboot.
+Navigate to `Advanced Options` > `Serial`, disable the login shell and then reboot.
