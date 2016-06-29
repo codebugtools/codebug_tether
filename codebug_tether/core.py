@@ -172,19 +172,19 @@ class CodeBug(SerialChannelDevice):
     def pwm_on(self, t2_prescale, full_period, on_period):
         """Turns on the PWM generator with the given settings.
 
-        :param t2_prescale: One of T2_PS_1_1, T2_PS_1_4, T2_PS_1_16
-                            Scales down the 12MHz instruction clock by
-                            1, 4 or 16.
-        :param full_period: 8-bit value - which is scaled up to 10-bits
-                            (<< 2) - to which timer 2 will count up to
-                            before resetting PWM output to 1.
-        :param on_period: 10-bit value to which timer 2 will count up to
-                          before setting PWM output to 0. Use this with
-                          full_period to control duty cycle. For
-                          example:
+        Args:
+            t2_prescale: One of T2_PS_1_1, T2_PS_1_4, T2_PS_1_16
+                Scales down the 12MHz instruction clock by
+                1, 4 or 16.
+            full_period: 8-bit value - which is scaled up to 10-bits
+                (<< 2) - to which timer 2 will count up to
+                before resetting PWM output to 1.
+            on_period: 10-bit value to which timer 2 will count up to
+                before setting PWM output to 0. Use this with
+                full_period to control duty cycle. For example:
 
-                              # 12MHz / 16 with 50% duty cycle
-                              codebug.pwm_on(T2_PS_1_16, 0xff, 0x200)
+                # 12MHz / 16 with 50% duty cycle
+                codebug.pwm_on(T2_PS_1_16, 0xff, 0x200)
 
         """
         # full period
@@ -335,6 +335,34 @@ class CodeBug(SerialChannelDevice):
             for i, row in enumerate(cb_rows):
                 self.or_mask(i, bytes(row))
 
+    def scroll_sprite(self, sprite, interval=0.1, direction='L'):
+        """Scrolls a sprite.
+
+        Args:
+            sprite: The sprite to scroll.
+            interval: The time delay between each movement in seconds.
+                (optional)
+            direction: The direction of the scroll ('L', 'R', 'U', 'D').
+
+        """
+        direction = direction.upper()[0]  # only take the first char
+        if direction == 'L':
+            for i in range(sprite.width+5):
+                self.draw_sprite(5-i, 0, sprite)
+                time.sleep(interval)
+        elif direction == 'D':
+            for i in range(sprite.height+5):
+                self.draw_sprite(0, 5-i, sprite)
+                time.sleep(interval)
+        elif direction == 'R':
+            for i in reversed(range(sprite.width+5)):
+                self.draw_sprite(5-i, 0, sprite)
+                time.sleep(interval)
+        elif direction == 'U':
+            for i in reversed(range(sprite.height+5)):
+                self.draw_sprite(0, 5-i, sprite)
+                time.sleep(interval)
+
     def config_extension_io(self):
         self.set(CHANNEL_INDEX_EXT_CONF, EXTENSION_CONF_IO)
 
@@ -390,10 +418,12 @@ class CodeBug(SerialChannelDevice):
         """Run an I2C transaction using the extensions pins. Be sure to
         configure the extension pins first.
 
-        :param add_stop_last_message: Adds stop flag to the last I2CMessage.
-        :type add_stop_last_message: boolean
-        :param interval: Adds delay of `interval` seconds between I2C messages.
-        :type interval: interger
+        Args:
+            messages: The I2C messages.
+            add_stop_last_message: Adds stop flag to the last
+                I2CMessage.
+            interval: Adds delay of `interval` seconds between I2C
+                messages.
 
         Example:
 
