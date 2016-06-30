@@ -6,6 +6,7 @@ interacting with CodeBug over USB Serial.
 
 Links:
     - `The CodeBug Website <http://www.codebug.org.uk>`_
+    - `CodeBug Activity: "Tethering CodeBug with Python" <http://www.codebug.org.uk/learn/activity/66/tethering-codebug-with-python/>`_
 
 Contents:
 
