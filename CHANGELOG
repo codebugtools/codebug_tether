@@ -1,6 +1,20 @@
 Change Log
 ==========
 
+v0.9.0
+------
+- Added `scroll_sprite` method.
+- Moved platform checking code to its own module.
+
+v0.8.6
+------
+- Fixed bug with vertical sprites not allocating the correct amount of
+  sprite space.
+
+v0.8.5
+------
+- Fixed timing issue with servos and USB response.
+
 v0.8.4
 ------
 - Default serial port is set to blank on error and added 'requires' to

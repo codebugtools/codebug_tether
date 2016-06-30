@@ -1,72 +1,13 @@
 from __future__ import print_function
-import os
-import sys
-import glob
 import time
 import serial
 import struct
-from codebug_tether.i2c import *
-from codebug_tether.serial_channel_device import SerialChannelDevice
+from .i2c import *
+from .serial_channel_device import SerialChannelDevice
+from .platform import get_platform_serial_port
 
 
-########################################################################
-# setup DEFAULT_SERIAL_PORT which is different on Windows, MacOS,
-# Raspberry Pi 2 and Raspberry Pi 3
-if sys.platform.startswith('win') or sys.platform.startswith('darwin'):
-    # On Windows or OSX take the first serial port we can find
-    def serial_ports():
-        """ Lists serial port names
-
-            :raises EnvironmentError:
-                On unsupported or unknown platforms
-            :returns:
-                A list of the serial ports available on the system
-        """
-        if sys.platform.startswith('win'):
-            ports = ['COM%s' % (i + 1) for i in range(256)]
-        elif (sys.platform.startswith('linux') or
-                sys.platform.startswith('cygwin')):
-            # this excludes your current terminal "/dev/tty"
-            ports = glob.glob('/dev/tty[A-Za-z0-9]*')
-        elif sys.platform.startswith('darwin'):
-            ports = glob.glob('/dev/tty.*')
-        else:
-            raise EnvironmentError('Unsupported platform')
-
-        result = []
-        for port in ports:
-            try:
-                s = serial.Serial(port)
-                s.close()
-                result.append(port)
-            except (OSError, serial.SerialException):
-                pass
-        return result
-    # use the first one
-    try:
-        DEFAULT_SERIAL_PORT = serial_ports()[0]
-    except IndexError:
-        print('ERROR: Could not find any serial ports.', file=sys.stderr)
-        DEFAULT_SERIAL_PORT = ''
-else:
-    # otherwise assume we're on Raspberry Pi/Linux
-    def get_rpi_revision():
-        """Returns the version number from the revision line."""
-        for line in open("/proc/cpuinfo"):
-            if "Revision" in line:
-                import re
-                return re.sub('Revision\t: ([a-z0-9]+)\n', r'\1', line)
-
-    rpi_revision = get_rpi_revision()
-    if (rpi_revision and
-            (rpi_revision != 'Beta') and
-            (int('0x'+rpi_revision, 16) >= 0xa02082)):
-        # RPi 3 and above
-        DEFAULT_SERIAL_PORT = '/dev/ttyS0'
-    else:
-        # RPi 2 and below
-        DEFAULT_SERIAL_PORT = '/dev/ttyACM0'
-########################################################################
+DEFAULT_SERIAL_PORT = get_platform_serial_port()
 
 IO_DIGITAL_OUTPUT = 0
 IO_DIGITAL_INPUT = 1
@@ -231,19 +172,19 @@ class CodeBug(SerialChannelDevice):
     def pwm_on(self, t2_prescale, full_period, on_period):
         """Turns on the PWM generator with the given settings.
 
-        :param t2_prescale: One of T2_PS_1_1, T2_PS_1_4, T2_PS_1_16
-                            Scales down the 12MHz instruction clock by
-                            1, 4 or 16.
-        :param full_period: 8-bit value - which is scaled up to 10-bits
-                            (<< 2) - to which timer 2 will count up to
-                            before resetting PWM output to 1.
-        :param on_period: 10-bit value to which timer 2 will count up to
-                          before setting PWM output to 0. Use this with
-                          full_period to control duty cycle. For
-                          example:
+        Args:
+            t2_prescale: One of T2_PS_1_1, T2_PS_1_4, T2_PS_1_16
+                Scales down the 12MHz instruction clock by
+                1, 4 or 16.
+            full_period: 8-bit value - which is scaled up to 10-bits
+                (<< 2) - to which timer 2 will count up to
+                before resetting PWM output to 1.
+            on_period: 10-bit value to which timer 2 will count up to
+                before setting PWM output to 0. Use this with
+                full_period to control duty cycle. For example:
 
-                              # 12MHz / 16 with 50% duty cycle
-                              codebug.pwm_on(T2_PS_1_16, 0xff, 0x200)
+                # 12MHz / 16 with 50% duty cycle
+                codebug.pwm_on(T2_PS_1_16, 0xff, 0x200)
 
         """
         # full period
@@ -394,6 +335,34 @@ class CodeBug(SerialChannelDevice):
             for i, row in enumerate(cb_rows):
                 self.or_mask(i, bytes(row))
 
+    def scroll_sprite(self, sprite, interval=0.1, direction='L'):
+        """Scrolls a sprite.
+
+        Args:
+            sprite: The sprite to scroll.
+            interval: The time delay between each movement in seconds.
+                (optional)
+            direction: The direction of the scroll ('L', 'R', 'U', 'D').
+
+        """
+        direction = direction.upper()[0]  # only take the first char
+        if direction == 'L':
+            for i in range(sprite.width+5):
+                self.draw_sprite(5-i, 0, sprite)
+                time.sleep(interval)
+        elif direction == 'D':
+            for i in range(sprite.height+5):
+                self.draw_sprite(0, 5-i, sprite)
+                time.sleep(interval)
+        elif direction == 'R':
+            for i in reversed(range(sprite.width+5)):
+                self.draw_sprite(5-i, 0, sprite)
+                time.sleep(interval)
+        elif direction == 'U':
+            for i in reversed(range(sprite.height+5)):
+                self.draw_sprite(0, 5-i, sprite)
+                time.sleep(interval)
+
     def config_extension_io(self):
         self.set(CHANNEL_INDEX_EXT_CONF, EXTENSION_CONF_IO)
 
@@ -449,10 +418,12 @@ class CodeBug(SerialChannelDevice):
         """Run an I2C transaction using the extensions pins. Be sure to
         configure the extension pins first.
 
-        :param add_stop_last_message: Adds stop flag to the last I2CMessage.
-        :type add_stop_last_message: boolean
-        :param interval: Adds delay of `interval` seconds between I2C messages.
-        :type interval: interger
+        Args:
+            messages: The I2C messages.
+            add_stop_last_message: Adds stop flag to the last
+                I2CMessage.
+            interval: Adds delay of `interval` seconds between I2C
+                messages.
 
         Example:
 

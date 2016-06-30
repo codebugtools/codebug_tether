@@ -184,7 +184,7 @@ class StringSprite(Sprite):
                   H"       !"
             """
             spr_width = font.char_width
-            spr_height = font.char_height + 1 * len(string)
+            spr_height = (font.char_height + 1) * len(string)
 
         super().__init__(spr_width, spr_height)
 
