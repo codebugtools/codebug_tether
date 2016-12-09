@@ -54,11 +54,12 @@ def get_platform_serial_port():
                     return re.sub('Revision\t: ([a-z0-9]+)\n', r'\1', line)
 
         rpi_revision = get_rpi_revision()
-        if (rpi_revision and
-                (rpi_revision != 'Beta') and
-                (int('0x'+rpi_revision, 16) >= 0xa02082)):
-            # RPi 3 and above
-            return '/dev/ttyS0'
-        else:
-            # RPi 2 and below
-            return '/dev/ttyACM0'
+#        if (rpi_revision and
+#                (rpi_revision != 'Beta') and
+#                (int('0x'+rpi_revision, 16) >= 0xa02082)):
+#            # RPi 3 and above
+#            return '/dev/ttyS0'
+#        else:
+#            # RPi 2 and below
+#            return '/dev/ttyACM0'
+        return '/dev/ttyACM0'

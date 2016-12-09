@@ -1,6 +1,10 @@
 Change Log
 ==========
 
+v0.9.1
+------
+- removed conditional checking RPi version; now always uses /dev/ttyACM0
+
 v0.9.0
 ------
 - Added `scroll_sprite` method.
